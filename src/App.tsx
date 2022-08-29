@@ -1,14 +1,16 @@
 import "./App.css";
 
 import { fileOpen, FileWithHandle, fileSave } from "browser-fs-access";
-import {
+import React, {
   useTransition,
   useCallback,
   useId,
   useRef,
   useState,
   PropsWithChildren,
+  useEffect,
 } from "react";
+
 // @ts-ignore
 import ImageBlobReduce from "image-blob-reduce";
 
@@ -17,8 +19,30 @@ const reducer = new ImageBlobReduce();
 const OPTIONS = {
   /** Border in pixels */
   border: 64,
-  aspectRatio: "1x1",
-  fit: 2000,
+  aspectRatio: "4x5" as AspectRatioId,
+};
+
+type AspectRatioId = "1x1" | "4x5";
+type AspectRatio = {
+  id: AspectRatioId;
+  label: string;
+  width: number;
+  height: number;
+};
+
+const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
+  "1x1": {
+    label: "Square",
+    id: "1x1",
+    width: 2000,
+    height: 2000,
+  },
+  "4x5": {
+    label: "4x5",
+    id: "4x5",
+    width: 1600,
+    height: 2000,
+  },
 };
 
 /**
@@ -28,10 +52,12 @@ const OPTIONS = {
 function drawImageWithBackground({
   canvasDest,
   canvasSrc,
+  aspectRatio,
   bgColor,
 }: {
   canvasSrc?: HTMLCanvasElement | null;
   canvasDest: HTMLCanvasElement | null;
+  aspectRatio: AspectRatio;
   bgColor: string;
 }) {
   const canvasDestCtx = canvasDest?.getContext("2d");
@@ -41,9 +67,13 @@ function drawImageWithBackground({
     return;
   }
 
+  // Set width/height
+  canvasDest.width = aspectRatio.width;
+  canvasDest.height = aspectRatio.height;
+
   // First, draw background
   canvasDestCtx.fillStyle = bgColor;
-  canvasDestCtx.fillRect(0, 0, OPTIONS.fit, OPTIONS.fit);
+  canvasDestCtx.fillRect(0, 0, aspectRatio.width, aspectRatio.height);
 
   // Then, draw scaled image, if specified
   if (canvasSrc) {
@@ -59,13 +89,13 @@ function drawImageWithBackground({
 
     if (orientation === "landscape") {
       dx = 0 + OPTIONS.border;
-      dy = (OPTIONS.fit - canvasSrc.height) / 2;
+      dy = (aspectRatio.height - canvasSrc.height) / 2;
     } else if (orientation === "portrait") {
-      dx = (OPTIONS.fit - canvasSrc.width) / 2;
+      dx = (aspectRatio.width - canvasSrc.width) / 2;
       dy = 0 + OPTIONS.border;
     } else {
-      dx = 0 + OPTIONS.border;
-      dy = 0 + OPTIONS.border;
+      dx = (aspectRatio.width - canvasSrc.width) / 2;
+      dy = (aspectRatio.height - canvasSrc.height) / 2;
     }
 
     canvasDestCtx.drawImage(canvasSrc, dx, dy);
@@ -73,22 +103,33 @@ function drawImageWithBackground({
 }
 
 function App() {
+  const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
+  const initialBgColor = "#dbffbd";
+
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
   const canvasSrcRef = useRef<HTMLCanvasElement>();
+
+  // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
+  // will typically also redraw on the canvas
+  const originalFileRef = useRef<FileWithHandle>();
 
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
   const [hasCanvasData, setHasCanvasData] = useState(false);
 
   // State/options based on user selections
-  const [bgColor, setBgColor] = useState("#ffffff");
+  const [bgColor, setBgColor] = useState(initialBgColor);
+  // TODO: This could be a ref, since it doesn't affect rendering per se
   const [filename, setFilename] = useState<string>();
+  const [aspectRatio, setAspectRatio] =
+    useState<AspectRatio>(initialAspectRatio);
 
   // Ids and stuff
   const id = useId();
   const ID = {
     bgColorInput: `${id}-bgColor`,
+    aspectRatioInput: `${id}-aspectRatio`,
   };
 
   // Transitions for things that affect the image parameters synchronously
@@ -99,6 +140,30 @@ function App() {
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
   const isLoading = isResizing || isDrawTransitionPending;
 
+  // Set the width/height of the canvas with the initial aspect ratio
+  useEffect(() => {
+    const canvasDest = canvasDestRef.current;
+    const canvasDestCtx = canvasDest?.getContext("2d");
+
+    if (!canvasDest || !canvasDestCtx) {
+      console.error("No destination canvas found!");
+      return;
+    }
+
+    // Set width/height
+    canvasDest.width = initialAspectRatio.width;
+    canvasDest.height = initialAspectRatio.height;
+
+    // Then, draw background
+    canvasDestCtx.fillStyle = initialBgColor;
+    canvasDestCtx.fillRect(
+      0,
+      0,
+      initialAspectRatio.width,
+      initialAspectRatio.height
+    );
+  }, [initialAspectRatio]);
+
   const changeBgColor = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       startDrawTransition(() => {
@@ -107,21 +172,63 @@ function App() {
         drawImageWithBackground({
           canvasSrc: canvasSrcRef.current,
           canvasDest: canvasDestRef.current,
+          aspectRatio,
           bgColor: newColor,
         });
       });
     },
-    []
+    [aspectRatio]
+  );
+
+  const changeAspectRatio = useCallback(
+    async (ev: React.ChangeEvent<HTMLInputElement>) => {
+      console.log(aspectRatio);
+      const newAspectRatio = ASPECT_RATIOS[ev.target.value as AspectRatioId];
+      console.log(newAspectRatio);
+
+      if (!newAspectRatio) {
+        console.error("Unrecognised aspect ratio:", newAspectRatio);
+        return;
+      }
+
+      setAspectRatio(newAspectRatio);
+
+      // Make a new resized image from the original file, if needed
+      setIsResizing(true);
+
+      const originalFile = originalFileRef.current;
+      if (originalFile) {
+        const reducedCanvas = (await reducer.toCanvas(originalFile, {
+          max: newAspectRatio.width - OPTIONS.border * 2,
+        })) as HTMLCanvasElement;
+
+        canvasSrcRef.current = reducedCanvas;
+      }
+
+      startDrawTransition(() => {
+        drawImageWithBackground({
+          canvasSrc: canvasSrcRef.current,
+          canvasDest: canvasDestRef.current,
+          aspectRatio: newAspectRatio,
+          bgColor,
+        });
+      });
+
+      setIsResizing(false);
+    },
+    [bgColor]
   );
 
   const selectFile = useCallback(
     async (file: FileWithHandle) => {
       // When the user selects a file, we update the source canvas data, and re-draw
       setFilename(file.name);
+      originalFileRef.current = file;
+
       setIsResizing(true);
 
       const reducedCanvas = (await reducer.toCanvas(file, {
-        max: OPTIONS.fit - OPTIONS.border * 2,
+        max: aspectRatio.width - OPTIONS.border * 2,
       })) as HTMLCanvasElement;
 
       canvasSrcRef.current = reducedCanvas;
@@ -131,11 +238,13 @@ function App() {
       drawImageWithBackground({
         canvasDest: canvasDestRef.current,
         canvasSrc: canvasSrcRef.current,
+        aspectRatio: aspectRatio,
         bgColor: bgColor,
       });
+
       setIsResizing(false);
     },
-    [bgColor]
+    [aspectRatio, bgColor]
   );
 
   const saveFile = useCallback(() => {
@@ -167,6 +276,28 @@ function App() {
               value={bgColor}
             ></input>
           </div>
+          <div>
+            <fieldset>
+              <legend>Aspect Ratio</legend>
+              {Object.values(ASPECT_RATIOS).map((ar) => {
+                return (
+                  <React.Fragment key={ar.id}>
+                    <input
+                      type="radio"
+                      name="aspectRatio"
+                      id={`${ID.aspectRatioInput}-${ar.id}`}
+                      value={ar.id}
+                      onChange={changeAspectRatio}
+                      defaultChecked={aspectRatio.id === ar.id}
+                    />
+                    <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
+                      {ar.label}
+                    </label>
+                  </React.Fragment>
+                );
+              })}
+            </fieldset>
+          </div>
           <FilePicker onChange={selectFile}>Select image</FilePicker>
         </form>
         <div className="CanvasArea">
@@ -175,8 +306,6 @@ function App() {
               className={`PreviewCanvas ${
                 hasCanvasData ? "PreviewCanvas--hasData" : ""
               }`}
-              width={OPTIONS.fit}
-              height={OPTIONS.fit}
               ref={canvasDestRef}
             ></canvas>
             {/* Consolidated loading indicator on top of the canvas */}

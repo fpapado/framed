@@ -38,7 +38,7 @@ input[type="color"] {
   display: block;
   max-width: 100%;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  /* aspect-ratio: 1 / 1; */
   border: 1px solid black;
 }
 

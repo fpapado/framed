@@ -1,38 +1,41 @@
-.App {
-  text-align: center;
+main {
+  padding: 1rem;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+main > * + * {
+  margin-top: 1rem;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.FilePicker,
+.DownloadButton {
+  display: block;
+  border: 1px solid black;
+  background-color: white;
+  min-width: 44px;
+  min-height: 44px;
+  font-weight: 600;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.CanvasArea {
+  margin-top: 1rem;
 }
 
-.App-link {
-  color: #61dafb;
+.PreviewCanvas {
+  display: block;
+  max-width: 100%;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid black;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+.DownloadButton {
+  margin-top: 1rem;
+}
+
+@media screen and (min-width: 64rem) {
+  .WorkArea {
+    display: grid;
+    grid-template-columns: minmax(max-content, 16rem) 32rem;
+    gap: 2rem;
   }
 }

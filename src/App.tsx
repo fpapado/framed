@@ -1,25 +1,199 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+
+import { fileOpen, FileWithHandle, fileSave } from "browser-fs-access";
+import { useTransition, useCallback, useId, useRef, useState } from "react";
+// @ts-ignore
+import ImageBlobReduce from "image-blob-reduce";
+
+const reducer = new ImageBlobReduce();
+
+const OPTIONS = {
+  /** Border in pixels */
+  border: 64,
+  aspectRatio: "1x1",
+  fit: 2000,
+};
+
+/**
+ * Draw an image with a specified background onto a canvas, fitting to the middle
+ * @param canvasDest
+ */
+function drawImageWithBackground({
+  canvasDest,
+  canvasSrc,
+  bgColor,
+}: {
+  canvasSrc?: HTMLCanvasElement | null;
+  canvasDest: HTMLCanvasElement | null;
+  bgColor: string;
+}) {
+  const canvasDestCtx = canvasDest?.getContext("2d");
+
+  if (!canvasDest || !canvasDestCtx) {
+    console.error("No destination canvas found!");
+    return;
+  }
+
+  // First, draw background
+  canvasDestCtx.fillStyle = bgColor;
+  canvasDestCtx.fillRect(0, 0, OPTIONS.fit, OPTIONS.fit);
+
+  // Then, draw scaled image, if specified
+  if (canvasSrc) {
+    const orientation =
+      canvasSrc.width > canvasSrc.height
+        ? "landscape"
+        : canvasSrc.width < canvasSrc.height
+        ? "portrait"
+        : "square";
+
+    let dx = 0;
+    let dy = 0;
+
+    if (orientation === "landscape") {
+      dx = 0 + OPTIONS.border;
+      dy = (OPTIONS.fit - canvasSrc.height) / 2;
+    } else if (orientation === "portrait") {
+      dx = (OPTIONS.fit - canvasSrc.width) / 2;
+      dy = 0 + OPTIONS.border;
+    } else {
+      dx = 0 + OPTIONS.border;
+      dy = 0 + OPTIONS.border;
+    }
+
+    canvasDestCtx.drawImage(canvasSrc, dx, dy);
+  }
+}
 
 function App() {
+  // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
+  // Used to share the image between paint methods
+  const canvasSrcRef = useRef<HTMLCanvasElement>();
+
+  // Destination canvas; the one that we manipulate on-screen
+  const canvasDestRef = useRef<HTMLCanvasElement>(null);
+  const [hasCanvasData, setHasCanvasData] = useState(false);
+
+  // State/options based on user selections
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [filename, setFilename] = useState<string>();
+
+  // Ids and stuff
+  const id = useId();
+  const ID = {
+    bgColorInput: `${id}-bgColor`,
+  };
+
+  const changeBgColor = useCallback(
+    (ev: React.ChangeEvent<HTMLInputElement>) => {
+      const newColor = ev.target.value;
+      console.count("changeBgColor");
+      setBgColor(newColor);
+      drawImageWithBackground({
+        canvasSrc: canvasSrcRef.current,
+        canvasDest: canvasDestRef.current,
+        bgColor: newColor,
+      });
+    },
+    []
+  );
+
+  const selectFile = useCallback(
+    async (file: FileWithHandle) => {
+      // When the user selects a file, we update the source canvas data, and re-draw
+      setFilename(file.name);
+      const reducedCanvas = (await reducer.toCanvas(file, {
+        max: OPTIONS.fit - OPTIONS.border * 2,
+      })) as HTMLCanvasElement;
+
+      canvasSrcRef.current = reducedCanvas;
+
+      setHasCanvasData(true);
+
+      drawImageWithBackground({
+        canvasDest: canvasDestRef.current,
+        canvasSrc: canvasSrcRef.current,
+        bgColor: bgColor,
+      });
+    },
+    [bgColor]
+  );
+
+  const saveFile = useCallback(() => {
+    canvasDestRef.current?.toBlob(
+      (blob) => {
+        if (blob) {
+          fileSave(blob, {
+            fileName: filename && `framed-${OPTIONS.aspectRatio}-${filename}`,
+          });
+        }
+      },
+      "image/jpeg",
+      0.75
+    );
+  }, [filename]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <main>
+      <h1>Framed</h1>
+      <div className="WorkArea">
+        <form onSubmit={(ev) => ev.preventDefault}>
+          <div>
+            <label htmlFor={ID.bgColorInput}>Background Color</label>
+            <input
+              type="color"
+              id={ID.bgColorInput}
+              name="bgColor"
+              onChange={changeBgColor}
+              value={bgColor}
+            ></input>
+          </div>
+          <FilePicker onChange={selectFile}></FilePicker>
+        </form>
+        <div className="CanvasArea">
+          <canvas
+            className={`PreviewCanvas ${
+              hasCanvasData ? "PreviewCanvas--hasData" : ""
+            }`}
+            width={OPTIONS.fit}
+            height={OPTIONS.fit}
+            ref={canvasDestRef}
+          ></canvas>
+          {hasCanvasData && (
+            <button className="DownloadButton" type="button" onClick={saveFile}>
+              Save
+            </button>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
+
+type FilePickerProps = {
+  onChange: (file: FileWithHandle) => void;
+};
+
+function FilePicker({ onChange }: FilePickerProps) {
+  const onClick = useCallback(async () => {
+    try {
+      const blob = await fileOpen({
+        mimeTypes: ["image/*"],
+        multiple: false,
+      });
+      onChange(blob);
+    } catch (err) {
+      // Ignore DOMException; those are thrown when the user does not select a file
+      if (err instanceof DOMException) {
+        return;
+      }
+      throw err;
+    }
+  }, [onChange]);
+  return (
+    <button type="button" className="FilePicker" onClick={onClick}>
+      Pick a file
+    </button>
   );
 }
 

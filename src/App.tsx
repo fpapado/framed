@@ -30,6 +30,22 @@ type AspectRatio = {
   height: number;
 };
 
+// TODO: Cancelation with pica cancelation token
+
+function getAspectRatioLongEdge(ar: AspectRatio): number {
+  if (ar.width > ar.height) {
+    return ar.width;
+  }
+  return ar.height;
+}
+
+function getAspectRatioShortEdge(ar: AspectRatio): number {
+  if (ar.width < ar.height) {
+    return ar.width;
+  }
+  return ar.height;
+}
+
 const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
   "1x1": {
     label: "Square",
@@ -182,7 +198,6 @@ function App() {
 
   const changeAspectRatio = useCallback(
     async (ev: React.ChangeEvent<HTMLInputElement>) => {
-      console.log(aspectRatio);
       const newAspectRatio = ASPECT_RATIOS[ev.target.value as AspectRatioId];
       console.log(newAspectRatio);
 
@@ -199,7 +214,7 @@ function App() {
       const originalFile = originalFileRef.current;
       if (originalFile) {
         const reducedCanvas = (await reducer.toCanvas(originalFile, {
-          max: newAspectRatio.width - OPTIONS.border * 2,
+          max: getAspectRatioShortEdge(newAspectRatio) - OPTIONS.border * 2,
         })) as HTMLCanvasElement;
 
         canvasSrcRef.current = reducedCanvas;
@@ -228,8 +243,14 @@ function App() {
       setIsResizing(true);
 
       const reducedCanvas = (await reducer.toCanvas(file, {
-        max: aspectRatio.width - OPTIONS.border * 2,
+        max: getAspectRatioShortEdge(aspectRatio) - OPTIONS.border * 2,
       })) as HTMLCanvasElement;
+
+      console.log(
+        "reducedCanvas info",
+        reducedCanvas.width,
+        reducedCanvas.height
+      );
 
       canvasSrcRef.current = reducedCanvas;
 
@@ -279,26 +300,36 @@ function App() {
           <div>
             <fieldset>
               <legend>Aspect Ratio</legend>
-              {Object.values(ASPECT_RATIOS).map((ar) => {
-                return (
-                  <React.Fragment key={ar.id}>
-                    <input
-                      type="radio"
-                      name="aspectRatio"
-                      id={`${ID.aspectRatioInput}-${ar.id}`}
-                      value={ar.id}
-                      onChange={changeAspectRatio}
-                      defaultChecked={aspectRatio.id === ar.id}
-                    />
-                    <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
-                      {ar.label}
-                    </label>
-                  </React.Fragment>
-                );
-              })}
+              <div className="RadioGroup">
+                {Object.values(ASPECT_RATIOS).map((ar) => {
+                  return (
+                    <div className="Radio" key={ar.id}>
+                      <input
+                        type="radio"
+                        name="aspectRatio"
+                        id={`${ID.aspectRatioInput}-${ar.id}`}
+                        value={ar.id}
+                        onChange={changeAspectRatio}
+                        defaultChecked={aspectRatio.id === ar.id}
+                      />
+                      <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
+                        {ar.label}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
             </fieldset>
           </div>
           <FilePicker onChange={selectFile}>Select image</FilePicker>
+          <button
+            className="DownloadButton"
+            type="button"
+            onClick={saveFile}
+            disabled={!hasCanvasData}
+          >
+            Save
+          </button>
         </form>
         <div className="CanvasArea">
           <div className="CanvasWrapper">
@@ -311,14 +342,6 @@ function App() {
             {/* Consolidated loading indicator on top of the canvas */}
             {isLoading && <div className="LoadingIndicator">Loading...</div>}
           </div>
-          <button
-            className="DownloadButton"
-            type="button"
-            onClick={saveFile}
-            disabled={!hasCanvasData}
-          >
-            Save
-          </button>
         </div>
       </div>
     </main>

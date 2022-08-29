@@ -44,6 +44,7 @@ input[type="color"] {
 
 .DownloadButton {
   margin-top: 1rem;
+  width: 100%;
 }
 
 .CanvasWrapper {
@@ -72,6 +73,34 @@ input[type="color"] {
   background: #ffffffaa;
   padding: 1rem;
   border-radius: 8px;
+}
+
+legend {
+  font-weight: 600;
+}
+
+.RadioGroup {
+  display: flex;
+  margin-top: 0.5rem;
+  gap: 1rem;
+}
+
+.Radio {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  min-width: 88px;
+  min-height: 44px;
+  border: 1px solid black;
+  padding: 0.5rem;
+  border-radius: 2px;
+}
+
+.Radio input[type="radio"] {
+  min-width: 44px;
+  min-height: 44px;
 }
 
 @media screen and (min-width: 64rem) {

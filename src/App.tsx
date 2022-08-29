@@ -1,7 +1,14 @@
 import "./App.css";
 
 import { fileOpen, FileWithHandle, fileSave } from "browser-fs-access";
-import { useTransition, useCallback, useId, useRef, useState } from "react";
+import {
+  useTransition,
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  PropsWithChildren,
+} from "react";
 // @ts-ignore
 import ImageBlobReduce from "image-blob-reduce";
 
@@ -84,15 +91,24 @@ function App() {
     bgColorInput: `${id}-bgColor`,
   };
 
+  // Transitions for things that affect the image parameters synchronously
+  // These can keep the UI more responsive under load
+  const [isDrawTransitionPending, startDrawTransition] = useTransition();
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
+  const isLoading = isResizing || isDrawTransitionPending;
+
   const changeBgColor = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
-      const newColor = ev.target.value;
-      console.count("changeBgColor");
-      setBgColor(newColor);
-      drawImageWithBackground({
-        canvasSrc: canvasSrcRef.current,
-        canvasDest: canvasDestRef.current,
-        bgColor: newColor,
+      startDrawTransition(() => {
+        const newColor = ev.target.value;
+        setBgColor(newColor);
+        drawImageWithBackground({
+          canvasSrc: canvasSrcRef.current,
+          canvasDest: canvasDestRef.current,
+          bgColor: newColor,
+        });
       });
     },
     []
@@ -102,6 +118,8 @@ function App() {
     async (file: FileWithHandle) => {
       // When the user selects a file, we update the source canvas data, and re-draw
       setFilename(file.name);
+      setIsResizing(true);
+
       const reducedCanvas = (await reducer.toCanvas(file, {
         max: OPTIONS.fit - OPTIONS.border * 2,
       })) as HTMLCanvasElement;
@@ -115,6 +133,7 @@ function App() {
         canvasSrc: canvasSrcRef.current,
         bgColor: bgColor,
       });
+      setIsResizing(false);
     },
     [bgColor]
   );
@@ -148,22 +167,29 @@ function App() {
               value={bgColor}
             ></input>
           </div>
-          <FilePicker onChange={selectFile}></FilePicker>
+          <FilePicker onChange={selectFile}>Select image</FilePicker>
         </form>
         <div className="CanvasArea">
-          <canvas
-            className={`PreviewCanvas ${
-              hasCanvasData ? "PreviewCanvas--hasData" : ""
-            }`}
-            width={OPTIONS.fit}
-            height={OPTIONS.fit}
-            ref={canvasDestRef}
-          ></canvas>
-          {hasCanvasData && (
-            <button className="DownloadButton" type="button" onClick={saveFile}>
-              Save
-            </button>
-          )}
+          <div className="CanvasWrapper">
+            <canvas
+              className={`PreviewCanvas ${
+                hasCanvasData ? "PreviewCanvas--hasData" : ""
+              }`}
+              width={OPTIONS.fit}
+              height={OPTIONS.fit}
+              ref={canvasDestRef}
+            ></canvas>
+            {/* Consolidated loading indicator on top of the canvas */}
+            {isLoading && <div className="LoadingIndicator">Loading...</div>}
+          </div>
+          <button
+            className="DownloadButton"
+            type="button"
+            onClick={saveFile}
+            disabled={!hasCanvasData}
+          >
+            Save
+          </button>
         </div>
       </div>
     </main>
@@ -174,7 +200,10 @@ type FilePickerProps = {
   onChange: (file: FileWithHandle) => void;
 };
 
-function FilePicker({ onChange }: FilePickerProps) {
+function FilePicker({
+  onChange,
+  children,
+}: PropsWithChildren<FilePickerProps>) {
   const onClick = useCallback(async () => {
     try {
       const blob = await fileOpen({
@@ -192,7 +221,7 @@ function FilePicker({ onChange }: FilePickerProps) {
   }, [onChange]);
   return (
     <button type="button" className="FilePicker" onClick={onClick}>
-      Pick a file
+      {children}
     </button>
   );
 }

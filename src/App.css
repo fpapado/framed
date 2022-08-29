@@ -6,6 +6,16 @@ main > * + * {
   margin-top: 1rem;
 }
 
+h1 {
+  margin-top: 0;
+  text-align: center;
+}
+
+input[type="color"] {
+  min-width: 88px;
+  min-height: 44px;
+}
+
 .FilePicker,
 .DownloadButton {
   display: block;
@@ -14,6 +24,10 @@ main > * + * {
   min-width: 44px;
   min-height: 44px;
   font-weight: 600;
+}
+
+.FilePicker {
+  width: 100%;
 }
 
 .CanvasArea {
@@ -30,6 +44,34 @@ main > * + * {
 
 .DownloadButton {
   margin-top: 1rem;
+}
+
+.CanvasWrapper {
+  position: relative;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.CanvasWrapper .LoadingIndicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  animation-name: fadeIn;
+  animation-duration: 400ms;
+  animation-delay: 400ms;
+  animation-fill-mode: both;
+  background: #ffffffaa;
+  padding: 1rem;
+  border-radius: 8px;
 }
 
 @media screen and (min-width: 64rem) {

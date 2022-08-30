@@ -4,7 +4,15 @@
   box-sizing: border-box;
 }
 
+:root {
+  --color-bg: #220c48;
+  --color-fg: #eee;
+  --color-divider: #eee;
+}
+
 html {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
   font-size: 1.125rem;
 }
 

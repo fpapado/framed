@@ -16,13 +16,63 @@ import ImageBlobReduce from "image-blob-reduce";
 
 const reducer = new ImageBlobReduce();
 
+reducer._calculate_size = function (env: any) {
+  // Override with a "fit maximally" function
+  console.log(env, env.image.width, env.image.height);
+
+  // original
+  // let scale_factor = env.opts.max / Math.max(env.image.width, env.image.height);
+  let scale_factor;
+
+  // Landscape aspect ratio
+  if (env.opts.maxWidth >= env.opts.maxHeight) {
+    // Landscape image: scale to fit the width
+    if (env.image.width > env.image.height) {
+      scale_factor =
+        env.opts.maxWidth / Math.max(env.image.width, env.image.height);
+    }
+    // Portrait or square image: scale to fit the height
+    else {
+      scale_factor =
+        env.opts.maxHeight / Math.max(env.image.width, env.image.height);
+    }
+  }
+  // Portrait or square aspect ratio
+  else {
+    // Landscape or square image: scale to fit the width
+    if (env.image.width >= env.image.height) {
+      scale_factor =
+        env.opts.maxWidth / Math.max(env.image.width, env.image.height);
+    }
+    // Portrait image: scale to fit the height
+    else {
+      scale_factor =
+        env.opts.maxHeight / Math.max(env.image.width, env.image.height);
+    }
+  }
+
+  if (scale_factor > 1) scale_factor = 1;
+
+  env.transform_width = Math.max(Math.round(env.image.width * scale_factor), 1);
+  env.transform_height = Math.max(
+    Math.round(env.image.height * scale_factor),
+    1
+  );
+
+  // Info for user plugins, to check if scaling applied
+  env.scale_factor = scale_factor;
+  console.log(env, env.image.width, env.image.height);
+
+  return Promise.resolve(env);
+};
+
 const OPTIONS = {
   /** Border in pixels */
   border: 64,
   aspectRatio: "4x5" as AspectRatioId,
 };
 
-type AspectRatioId = "1x1" | "4x5";
+type AspectRatioId = "1x1" | "4x5" | "3x2";
 type AspectRatio = {
   id: AspectRatioId;
   label: string;
@@ -52,6 +102,12 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
     id: "1x1",
     width: 2000,
     height: 2000,
+  },
+  "3x2": {
+    label: "3x2",
+    id: "3x2",
+    width: 2000,
+    height: 1333,
   },
   "4x5": {
     label: "4x5",
@@ -120,7 +176,7 @@ function drawImageWithBackground({
 
 function App() {
   const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
-  const initialBgColor = "#dbffbd";
+  const initialBgColor = "#ffffff";
 
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
@@ -214,7 +270,8 @@ function App() {
       const originalFile = originalFileRef.current;
       if (originalFile) {
         const reducedCanvas = (await reducer.toCanvas(originalFile, {
-          max: getAspectRatioShortEdge(newAspectRatio) - OPTIONS.border * 2,
+          maxWidth: newAspectRatio.width - OPTIONS.border * 2,
+          maxHeight: newAspectRatio.height - OPTIONS.border * 2,
         })) as HTMLCanvasElement;
 
         canvasSrcRef.current = reducedCanvas;
@@ -243,7 +300,8 @@ function App() {
       setIsResizing(true);
 
       const reducedCanvas = (await reducer.toCanvas(file, {
-        max: getAspectRatioShortEdge(aspectRatio) - OPTIONS.border * 2,
+        maxWidth: aspectRatio.width - OPTIONS.border * 2,
+        maxHeight: aspectRatio.height - OPTIONS.border * 2,
       })) as HTMLCanvasElement;
 
       console.log(
@@ -273,7 +331,7 @@ function App() {
       (blob) => {
         if (blob) {
           fileSave(blob, {
-            fileName: filename && `framed-${OPTIONS.aspectRatio}-${filename}`,
+            fileName: filename && `framed-${aspectRatio.id}-${filename}`,
           });
         }
       },

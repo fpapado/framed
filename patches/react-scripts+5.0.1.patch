@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-scripts/config/webpack.config.js b/node_modules/react-scripts/config/webpack.config.js
+index e465d8e..8c5fe04 100644
+--- a/node_modules/react-scripts/config/webpack.config.js
++++ b/node_modules/react-scripts/config/webpack.config.js
+@@ -282,6 +282,7 @@ module.exports = function (webpackEnv) {
+               // Pending further investigation:
+               // https://github.com/terser-js/terser/issues/120
+               inline: 2,
++	      evaluate: false,
+             },
+             mangle: {
+               safari10: true,

@@ -267,8 +267,9 @@ function App() {
       setProcessingState("processing");
 
       const originalFile = originalFileRef.current;
-      if (originalFile) {
-        try {
+
+      try {
+        if (originalFile) {
           // Cancel existing tasks and start a new one
           processingAbortController.current?.abort();
           processingAbortController.current = new AbortController();
@@ -286,24 +287,24 @@ function App() {
           processingAbortController.current = undefined;
 
           canvasSrcRef.current = reducedCanvas;
-
-          startDrawTransition(() => {
-            drawImageWithBackground({
-              canvasSrc: canvasSrcRef.current,
-              canvasDest: canvasDestRef.current,
-              aspectRatio: newAspectRatio,
-              bgColor,
-            });
-          });
-          setProcessingState("inert");
-        } catch (err) {
-          // Ignore error if it is a cancelation error; this is expected
-          if (err instanceof DOMException && err.name === "AbortError") {
-            return;
-          }
-          console.error(err);
-          setProcessingState("error");
         }
+
+        startDrawTransition(() => {
+          drawImageWithBackground({
+            canvasSrc: canvasSrcRef.current,
+            canvasDest: canvasDestRef.current,
+            aspectRatio: newAspectRatio,
+            bgColor,
+          });
+        });
+        setProcessingState("inert");
+      } catch (err) {
+        // Ignore error if it is a cancelation error; this is expected
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        console.error(err);
+        setProcessingState("error");
       }
     },
     [bgColor]

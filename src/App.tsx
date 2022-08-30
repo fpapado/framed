@@ -145,6 +145,29 @@ function drawImageWithBackground({
   }
 }
 
+type ProcessingState = "inert" | "processing" | "error";
+
+/**
+ * Create a cancelation token, which will reject if aborted, based on a signal.
+ * This is backed by an AbortController/AbortSignal, which allows us to cancel the operations
+ * without keeping a reference to them; we only need a reference to the controller.
+ */
+function createCancelationToken(signal: AbortSignal) {
+  return new Promise((_resolve, reject) => {
+    // It's possible the signal is already aborted!
+    if (signal.aborted) {
+      console.log("Already aborted: Canceled operation in flight");
+      reject(signal.reason);
+    }
+
+    // Attach a listener to the 'abort' event, in case it gets aborted in the future
+    signal.addEventListener("abort", () => {
+      console.log("Abort event: Canceled operation in flight");
+      reject(signal.reason);
+    });
+  });
+}
+
 function App() {
   const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
   const initialBgColor = "#ffffff";
@@ -152,6 +175,9 @@ function App() {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
   const canvasSrcRef = useRef<HTMLCanvasElement>();
+
+  // Keep a controller to cancel processing, e.g. when the user changes a setting
+  const processingAbortController = useRef<AbortController>();
 
   // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
   // will typically also redraw on the canvas
@@ -178,11 +204,13 @@ function App() {
   // Transitions for things that affect the image parameters synchronously
   // These can keep the UI more responsive under load
   const [isDrawTransitionPending, startDrawTransition] = useTransition();
-  const [isResizing, setIsResizing] = useState(false);
+
+  // Processing state for async operations
+  const [processingState, setProcessingState] =
+    useState<ProcessingState>("inert");
 
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
-  const isLoading = isResizing || isDrawTransitionPending;
-  const [hasError, setHasError] = useState(false);
+  const isLoading = processingState === "processing" || isDrawTransitionPending;
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -236,34 +264,47 @@ function App() {
       setAspectRatio(newAspectRatio);
 
       // Make a new resized image from the original file, if needed
-      setIsResizing(true);
+      setProcessingState("processing");
 
       const originalFile = originalFileRef.current;
       if (originalFile) {
         try {
-          setHasError(false);
+          // Cancel existing tasks and start a new one
+          processingAbortController.current?.abort();
+          processingAbortController.current = new AbortController();
+
+          // TODO: Cancelable process here, with signal and cleanup
           const reducedCanvas = (await reducer.toCanvas(originalFile, {
             maxWidth: newAspectRatio.width - OPTIONS.border * 2,
             maxHeight: newAspectRatio.height - OPTIONS.border * 2,
+            cancelToken: createCancelationToken(
+              processingAbortController.current.signal
+            ),
           })) as HTMLCanvasElement;
 
+          // Reset the abort controller, because it is no longer relevant
+          processingAbortController.current = undefined;
+
           canvasSrcRef.current = reducedCanvas;
+
+          startDrawTransition(() => {
+            drawImageWithBackground({
+              canvasSrc: canvasSrcRef.current,
+              canvasDest: canvasDestRef.current,
+              aspectRatio: newAspectRatio,
+              bgColor,
+            });
+          });
+          setProcessingState("inert");
         } catch (err) {
+          // Ignore error if it is a cancelation error; this is expected
+          if (err instanceof DOMException && err.name === "AbortError") {
+            return;
+          }
           console.error(err);
-          setHasError(true);
+          setProcessingState("error");
         }
       }
-
-      startDrawTransition(() => {
-        drawImageWithBackground({
-          canvasSrc: canvasSrcRef.current,
-          canvasDest: canvasDestRef.current,
-          aspectRatio: newAspectRatio,
-          bgColor,
-        });
-      });
-
-      setIsResizing(false);
     },
     [bgColor]
   );
@@ -274,15 +315,23 @@ function App() {
       setFilename(file.name);
       originalFileRef.current = file;
 
-      setIsResizing(true);
+      setProcessingState("processing");
 
       try {
-        setHasError(false);
+        // Cancel existing tasks and start a new one
+        processingAbortController.current?.abort();
+        processingAbortController.current = new AbortController();
+
         const reducedCanvas = (await reducer.toCanvas(file, {
           maxWidth: aspectRatio.width - OPTIONS.border * 2,
           maxHeight: aspectRatio.height - OPTIONS.border * 2,
+          cancelToken: createCancelationToken(
+            processingAbortController.current.signal
+          ),
         })) as HTMLCanvasElement;
 
+        // Reset the abort controller, because it is no longer relevant
+        processingAbortController.current = undefined;
         canvasSrcRef.current = reducedCanvas;
 
         setHasCanvasData(true);
@@ -294,11 +343,14 @@ function App() {
           bgColor: bgColor,
         });
 
-        setIsResizing(false);
+        setProcessingState("inert");
       } catch (err) {
+        // Ignore error if it is a cancelation error; this is expected
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
         console.error(err);
-        setIsResizing(false);
-        setHasError(true);
+        setProcessingState("error");
       }
     },
     [aspectRatio, bgColor]
@@ -377,11 +429,11 @@ function App() {
             ></canvas>
             {/* Consolidated loading indicator on top of the canvas */}
             {isLoading && <div className="LoadingIndicator">Loading...</div>}
-            {hasError && (
+            {processingState === "error" && (
               <div className="ErrorIndicator">
                 <p>
                   Something went wrong when resizing the image. Please try again
-                  later
+                  later.
                 </p>
               </div>
             )}

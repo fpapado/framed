@@ -32,6 +32,11 @@ input[type="color"] {
 
 .CanvasArea {
   margin-top: 1rem;
+  grid-area: preview;
+}
+
+.Controls {
+  grid-area: controls;
 }
 
 .PreviewCanvas {
@@ -105,9 +110,16 @@ legend {
 }
 
 @media screen and (min-width: 64rem) {
+  /* Reset canvas area top margin from narrow screen view */
+  .CanvasArea {
+    margin-top: 0;
+  }
+
   .WorkArea {
     display: grid;
-    grid-template-columns: minmax(max-content, 16rem) 32rem;
+    grid-template-areas: "preview controls";
+    grid-template-columns: 28rem minmax(max-content, 16rem);
+    justify-content: center;
     gap: 2rem;
   }
 }

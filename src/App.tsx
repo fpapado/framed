@@ -308,7 +308,7 @@ function App() {
     <main>
       <h1>Framed</h1>
       <div className="WorkArea">
-        <form onSubmit={(ev) => ev.preventDefault}>
+        <form onSubmit={(ev) => ev.preventDefault} className="Controls">
           <div>
             <label htmlFor={ID.bgColorInput}>Background Color</label>
             <input

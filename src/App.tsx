@@ -20,35 +20,23 @@ reducer._calculate_size = function (env: any) {
   // Override with a "fit maximally" function
   console.log(env, env.image.width, env.image.height);
 
-  // original
-  // let scale_factor = env.opts.max / Math.max(env.image.width, env.image.height);
   let scale_factor;
 
-  // Landscape aspect ratio
-  if (env.opts.maxWidth >= env.opts.maxHeight) {
-    // Landscape image: scale to fit the width
-    if (env.image.width > env.image.height) {
-      scale_factor =
-        env.opts.maxWidth / Math.max(env.image.width, env.image.height);
-    }
-    // Portrait or square image: scale to fit the height
-    else {
-      scale_factor =
-        env.opts.maxHeight / Math.max(env.image.width, env.image.height);
-    }
+  // Landscape image: scale to fit the width
+  if (env.image.width > env.image.height) {
+    scale_factor =
+      env.opts.maxWidth / Math.max(env.image.width, env.image.height);
   }
-  // Portrait or square aspect ratio
+  // Portrait image: scale to fit the height
+  else if (env.image.width < env.image.height) {
+    scale_factor =
+      env.opts.maxHeight / Math.max(env.image.width, env.image.height);
+  }
+  // Landscape image: scale to fit the shortest dimension
   else {
-    // Landscape or square image: scale to fit the width
-    if (env.image.width >= env.image.height) {
-      scale_factor =
-        env.opts.maxWidth / Math.max(env.image.width, env.image.height);
-    }
-    // Portrait image: scale to fit the height
-    else {
-      scale_factor =
-        env.opts.maxHeight / Math.max(env.image.width, env.image.height);
-    }
+    scale_factor =
+      Math.min(env.opts.maxHeight, env.opts.maxWidth) /
+      Math.max(env.image.width, env.image.height);
   }
 
   if (scale_factor > 1) scale_factor = 1;

@@ -70,6 +70,7 @@ input[type="color"] {
   animation-duration: 400ms;
   animation-delay: 400ms;
   animation-fill-mode: both;
+  color: #111;
   background: #ffffffaa;
   padding: 1rem;
   border-radius: 8px;

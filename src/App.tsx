@@ -182,6 +182,7 @@ function App() {
 
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
   const isLoading = isResizing || isDrawTransitionPending;
+  const [hasError, setHasError] = useState(false);
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -239,12 +240,18 @@ function App() {
 
       const originalFile = originalFileRef.current;
       if (originalFile) {
-        const reducedCanvas = (await reducer.toCanvas(originalFile, {
-          maxWidth: newAspectRatio.width - OPTIONS.border * 2,
-          maxHeight: newAspectRatio.height - OPTIONS.border * 2,
-        })) as HTMLCanvasElement;
+        try {
+          setHasError(false);
+          const reducedCanvas = (await reducer.toCanvas(originalFile, {
+            maxWidth: newAspectRatio.width - OPTIONS.border * 2,
+            maxHeight: newAspectRatio.height - OPTIONS.border * 2,
+          })) as HTMLCanvasElement;
 
-        canvasSrcRef.current = reducedCanvas;
+          canvasSrcRef.current = reducedCanvas;
+        } catch (err) {
+          console.error(err);
+          setHasError(true);
+        }
       }
 
       startDrawTransition(() => {
@@ -269,23 +276,30 @@ function App() {
 
       setIsResizing(true);
 
-      const reducedCanvas = (await reducer.toCanvas(file, {
-        maxWidth: aspectRatio.width - OPTIONS.border * 2,
-        maxHeight: aspectRatio.height - OPTIONS.border * 2,
-      })) as HTMLCanvasElement;
+      try {
+        setHasError(false);
+        const reducedCanvas = (await reducer.toCanvas(file, {
+          maxWidth: aspectRatio.width - OPTIONS.border * 2,
+          maxHeight: aspectRatio.height - OPTIONS.border * 2,
+        })) as HTMLCanvasElement;
 
-      canvasSrcRef.current = reducedCanvas;
+        canvasSrcRef.current = reducedCanvas;
 
-      setHasCanvasData(true);
+        setHasCanvasData(true);
 
-      drawImageWithBackground({
-        canvasDest: canvasDestRef.current,
-        canvasSrc: canvasSrcRef.current,
-        aspectRatio: aspectRatio,
-        bgColor: bgColor,
-      });
+        drawImageWithBackground({
+          canvasDest: canvasDestRef.current,
+          canvasSrc: canvasSrcRef.current,
+          aspectRatio: aspectRatio,
+          bgColor: bgColor,
+        });
 
-      setIsResizing(false);
+        setIsResizing(false);
+      } catch (err) {
+        console.error(err);
+        setIsResizing(false);
+        setHasError(true);
+      }
     },
     [aspectRatio, bgColor]
   );
@@ -363,6 +377,14 @@ function App() {
             ></canvas>
             {/* Consolidated loading indicator on top of the canvas */}
             {isLoading && <div className="LoadingIndicator">Loading...</div>}
+            {hasError && (
+              <div className="ErrorIndicator">
+                <p>
+                  Something went wrong when resizing the image. Please try again
+                  later
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

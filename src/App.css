@@ -81,6 +81,24 @@ input[type="color"] {
   border-radius: 8px;
 }
 
+.CanvasWrapper .ErrorIndicator {
+  padding: 1rem;
+  max-width: 18rem;
+  width: 100%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  animation-name: fadeIn;
+  animation-duration: 400ms;
+  animation-delay: 400ms;
+  animation-fill-mode: both;
+  color: rgb(251, 166, 166);
+  background: #111;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
 legend {
   font-weight: 600;
 }

@@ -57,7 +57,7 @@ const OPTIONS = {
   aspectRatio: "4x5" as AspectRatioId,
 };
 
-type AspectRatioId = "1x1" | "4x5" | "3x2";
+type AspectRatioId = "1x1" | "4x5";
 type AspectRatio = {
   id: AspectRatioId;
   label: string;
@@ -74,12 +74,12 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
     width: 2000,
     height: 2000,
   },
-  "3x2": {
-    label: "3x2",
-    id: "3x2",
-    width: 2000,
-    height: 1333,
-  },
+  // "3x2": {
+  //   label: "3x2",
+  //   id: "3x2",
+  //   width: 2000,
+  //   height: 1333,
+  // },
   "4x5": {
     label: "4x5",
     id: "4x5",
@@ -372,76 +372,96 @@ function App() {
   }, [aspectRatio.id, filename]);
 
   return (
-    <main>
-      <h1>Framed</h1>
-      <div className="WorkArea">
-        <form onSubmit={(ev) => ev.preventDefault} className="Controls">
-          <div>
-            <label htmlFor={ID.bgColorInput}>Background Color</label>
-            <input
-              type="color"
-              id={ID.bgColorInput}
-              name="bgColor"
-              onChange={changeBgColor}
-              value={bgColor}
-            ></input>
-          </div>
-          <div>
-            <fieldset>
-              <legend>Aspect Ratio</legend>
-              <div className="RadioGroup">
-                {Object.values(ASPECT_RATIOS).map((ar) => {
-                  return (
-                    <div className="Radio" key={ar.id}>
-                      <input
-                        type="radio"
-                        name="aspectRatio"
-                        id={`${ID.aspectRatioInput}-${ar.id}`}
-                        value={ar.id}
-                        onChange={changeAspectRatio}
-                        defaultChecked={aspectRatio.id === ar.id}
-                      />
-                      <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
-                        {ar.label}
-                      </label>
-                    </div>
-                  );
-                })}
-              </div>
-            </fieldset>
-          </div>
-          <FilePicker onChange={selectFile}>Pick image</FilePicker>
-          <button
-            className="DownloadButton"
-            type="button"
-            onClick={saveFile}
-            disabled={!hasCanvasData}
-          >
-            Save
-          </button>
-        </form>
-        <div className="CanvasArea">
-          <div className="CanvasWrapper">
-            <canvas
-              className={`PreviewCanvas ${
-                hasCanvasData ? "PreviewCanvas--hasData" : ""
-              }`}
-              ref={canvasDestRef}
-            ></canvas>
-            {/* Consolidated loading indicator on top of the canvas */}
-            {isLoading && <div className="LoadingIndicator">Loading...</div>}
-            {processingState === "error" && (
-              <div className="ErrorIndicator">
-                <p>
-                  Something went wrong when resizing the image. Please try again
-                  later.
-                </p>
-              </div>
-            )}
+    <>
+      <main>
+        <h1>Framed</h1>
+        <div className="WorkArea">
+          <form onSubmit={(ev) => ev.preventDefault} className="Controls">
+            <div>
+              <label htmlFor={ID.bgColorInput}>Background Color</label>
+              <input
+                type="color"
+                id={ID.bgColorInput}
+                name="bgColor"
+                onChange={changeBgColor}
+                value={bgColor}
+              ></input>
+            </div>
+            <div>
+              <fieldset>
+                <legend>Aspect Ratio</legend>
+                <div className="RadioGroup">
+                  {Object.values(ASPECT_RATIOS).map((ar) => {
+                    return (
+                      <div className="Radio" key={ar.id}>
+                        <input
+                          type="radio"
+                          name="aspectRatio"
+                          id={`${ID.aspectRatioInput}-${ar.id}`}
+                          value={ar.id}
+                          onChange={changeAspectRatio}
+                          defaultChecked={aspectRatio.id === ar.id}
+                        />
+                        <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
+                          {ar.label}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            </div>
+            <FilePicker onChange={selectFile}>Pick image</FilePicker>
+            <button
+              className="DownloadButton"
+              type="button"
+              onClick={saveFile}
+              disabled={!hasCanvasData}
+            >
+              Save
+            </button>
+          </form>
+          <div className="CanvasArea">
+            <div className="CanvasWrapper">
+              <canvas
+                className={`PreviewCanvas ${
+                  hasCanvasData ? "PreviewCanvas--hasData" : ""
+                }`}
+                ref={canvasDestRef}
+              ></canvas>
+              {/* Consolidated loading indicator on top of the canvas */}
+              {isLoading && <div className="LoadingIndicator">Loading...</div>}
+              {processingState === "error" && (
+                <div className="ErrorIndicator">
+                  <p>
+                    Something went wrong when resizing the image. Please try
+                    again later.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
-    </main>
+      </main>
+      <footer>
+        <footer>
+          <p>
+            Made with 🎞️ & 😓 by{" "}
+            <a
+              href="https://fotis.xyz"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Fotis Papadogeorgopoulos
+            </a>
+          </p>
+          <p>
+            You can use this app offline, by installing it via your browser's
+            "Add to Home Screen" functionality.
+          </p>
+        </footer>
+      </footer>
+    </>
   );
 }
 

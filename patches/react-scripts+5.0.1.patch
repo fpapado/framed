@@ -1,12 +1,26 @@
 diff --git a/node_modules/react-scripts/config/webpack.config.js b/node_modules/react-scripts/config/webpack.config.js
-index e465d8e..8c5fe04 100644
+index e465d8e..33a3b24 100644
 --- a/node_modules/react-scripts/config/webpack.config.js
 +++ b/node_modules/react-scripts/config/webpack.config.js
-@@ -282,6 +282,7 @@ module.exports = function (webpackEnv) {
-               // Pending further investigation:
-               // https://github.com/terser-js/terser/issues/120
-               inline: 2,
-+	      evaluate: false,
+@@ -269,20 +269,7 @@ module.exports = function (webpackEnv) {
+               // https://github.com/facebook/create-react-app/pull/4234
+               ecma: 8,
              },
+-            compress: {
+-              ecma: 5,
+-              warnings: false,
+-              // Disabled because of an issue with Uglify breaking seemingly valid code:
+-              // https://github.com/facebook/create-react-app/issues/2376
+-              // Pending further investigation:
+-              // https://github.com/mishoo/UglifyJS2/issues/2011
+-              comparisons: false,
+-              // Disabled because of an issue with Terser breaking valid code:
+-              // https://github.com/facebook/create-react-app/issues/5250
+-              // Pending further investigation:
+-              // https://github.com/terser-js/terser/issues/120
+-              inline: 2,
+-            },
++            compress: false,
              mangle: {
                safari10: true,
+             },

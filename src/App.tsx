@@ -18,8 +18,6 @@ const reducer = new ImageBlobReduce();
 
 reducer._calculate_size = function (env: any) {
   // Override with a "fit maximally" function
-  console.log(env, env.image.width, env.image.height);
-
   let scale_factor;
 
   // Landscape image: scale to fit the width
@@ -49,7 +47,6 @@ reducer._calculate_size = function (env: any) {
 
   // Info for user plugins, to check if scaling applied
   env.scale_factor = scale_factor;
-  console.log(env, env.image.width, env.image.height);
 
   return Promise.resolve(env);
 };
@@ -69,20 +66,6 @@ type AspectRatio = {
 };
 
 // TODO: Cancelation with pica cancelation token
-
-function getAspectRatioLongEdge(ar: AspectRatio): number {
-  if (ar.width > ar.height) {
-    return ar.width;
-  }
-  return ar.height;
-}
-
-function getAspectRatioShortEdge(ar: AspectRatio): number {
-  if (ar.width < ar.height) {
-    return ar.width;
-  }
-  return ar.height;
-}
 
 const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
   "1x1": {
@@ -243,7 +226,6 @@ function App() {
   const changeAspectRatio = useCallback(
     async (ev: React.ChangeEvent<HTMLInputElement>) => {
       const newAspectRatio = ASPECT_RATIOS[ev.target.value as AspectRatioId];
-      console.log(newAspectRatio);
 
       if (!newAspectRatio) {
         console.error("Unrecognised aspect ratio:", newAspectRatio);
@@ -292,12 +274,6 @@ function App() {
         maxHeight: aspectRatio.height - OPTIONS.border * 2,
       })) as HTMLCanvasElement;
 
-      console.log(
-        "reducedCanvas info",
-        reducedCanvas.width,
-        reducedCanvas.height
-      );
-
       canvasSrcRef.current = reducedCanvas;
 
       setHasCanvasData(true);
@@ -326,7 +302,7 @@ function App() {
       "image/jpeg",
       0.75
     );
-  }, [filename]);
+  }, [aspectRatio.id, filename]);
 
   return (
     <main>

@@ -410,7 +410,7 @@ function App() {
               </div>
             </fieldset>
           </div>
-          <FilePicker onChange={selectFile}>Select image</FilePicker>
+          <FilePicker onChange={selectFile}>Pick image</FilePicker>
           <button
             className="DownloadButton"
             type="button"

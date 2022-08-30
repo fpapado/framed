@@ -1,7 +1,19 @@
 {
   "short_name": "Framed",
-  "name": "Framed: Pictures in frames quickly",
-  "description": "Tool to fit pictures to frames with custom aspect ratios",
+  "name": "Framed: Pictures in frames, quickly.",
+  "description": "Fit pictures to frames, such as square or 4x5, right in the browser.",
+  "lang": "en",
+  "categories": ["photo", "productivity", "utilities"],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#fffff1",
+  "background_color": "#fffff1",
+  "share_target": {
+    "action": "/?utm_medium=PWA&utm_source=share-target&share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": { "files": [{ "name": "file", "accept": ["image/*"] }] }
+  },
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,8 +32,16 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#fffff1",
-  "background_color": "#fffff1"
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-narrow.png",
+      "type": "image/jpg",
+      "sizes": "550x1195"
+    },
+    {
+      "src": "/screenshots/screenshot-wide.jpg",
+      "type": "image/jpg",
+      "sizes": "1000x778"
+    }
+  ]
 }

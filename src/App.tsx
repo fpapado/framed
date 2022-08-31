@@ -107,10 +107,11 @@ function App() {
       aspectRatio: AspectRatio;
       bgColor: string;
     }) => {
-      if (blob) {
-        try {
-          setProcessingState("processing");
+      try {
+        setProcessingState("processing");
 
+        // Resize blob, if one is specified
+        if (blob) {
           // Cancel existing tasks and start a new one
           processingAbortController.current?.abort();
           processingAbortController.current = new AbortController();
@@ -126,25 +127,25 @@ function App() {
 
           // Update the stored canvas for future operations (e.g. re-drawing after changing colour)
           canvasSrcRef.current = reducedCanvas;
-
-          // Re-draw the image
-          drawImageWithBackground({
-            canvasSrc: reducedCanvas,
-            canvasDest: canvasDestRef.current,
-            border: OPTIONS.border,
-            aspectRatio,
-            bgColor,
-          });
-
-          setProcessingState("inert");
-        } catch (err) {
-          // Ignore error if it is a cancelation error; this is expected
-          if (err instanceof DOMException && err.name === "AbortError") {
-            return;
-          }
-          console.error("Unaccounted error: ", err);
-          setProcessingState("error");
         }
+
+        // Re-draw the image
+        drawImageWithBackground({
+          canvasSrc: canvasSrcRef.current,
+          canvasDest: canvasDestRef.current,
+          border: OPTIONS.border,
+          aspectRatio,
+          bgColor,
+        });
+
+        setProcessingState("inert");
+      } catch (err) {
+        // Ignore error if it is a cancelation error; this is expected
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        console.error("Unaccounted error: ", err);
+        setProcessingState("error");
       }
     },
     []
@@ -217,16 +218,13 @@ function App() {
       startDrawTransition(() => {
         const newColor = ev.target.value;
         setBgColor(newColor);
-        drawImageWithBackground({
-          canvasSrc: canvasSrcRef.current,
-          canvasDest: canvasDestRef.current,
-          border: OPTIONS.border,
+        updateCanvas({
           aspectRatio,
           bgColor: newColor,
         });
       });
     },
-    [aspectRatio]
+    [aspectRatio, updateCanvas]
   );
 
   const changeAspectRatio = useCallback(

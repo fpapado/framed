@@ -50,7 +50,7 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
   },
 };
 
-type ProcessingState = "inert" | "processing" | "error" | "inertWithData";
+type ProcessingState = "inert" | "processing" | "error";
 
 const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
 const initialBgColor = "#ffffff";
@@ -178,7 +178,7 @@ function App() {
             aspectRatio: newAspectRatio,
             bgColor,
           });
-          setProcessingState("inertWithData");
+          setProcessingState("inert");
         });
       } catch (err) {
         // Ignore error if it is a cancelation error; this is expected
@@ -224,7 +224,7 @@ function App() {
             bgColor: bgColor,
           });
 
-          setProcessingState("inertWithData");
+          setProcessingState("inert");
         });
       } catch (err) {
         // Ignore error if it is a cancelation error; this is expected
@@ -254,9 +254,10 @@ function App() {
     );
   }, [aspectRatio.id, filename]);
 
+  /** Effect to listen for the share target and receive an image file */
   useEffect(() => {
     /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
-    let isRelevant = true;
+    let hasCleanedUp = false;
     const awaitingShareTarget = new URL(window.location.href).searchParams.has(
       "share-target"
     );
@@ -268,9 +269,10 @@ function App() {
     }
 
     async function effectInner() {
+      setProcessingState("processing");
       const file = await swBridge.getSharedImage();
 
-      if (!isRelevant) return;
+      if (hasCleanedUp) return;
 
       // Remove the ?share-target from the URL
       window.history.replaceState("", "", "/");
@@ -293,7 +295,7 @@ function App() {
           canvasSrcRef.current = reducedCanvas;
         }
 
-        if (!isRelevant) return;
+        if (hasCleanedUp) return;
 
         startDrawTransition(() => {
           drawImageWithBackground({
@@ -303,7 +305,7 @@ function App() {
             aspectRatio: initialAspectRatio,
             bgColor: initialBgColor,
           });
-          setProcessingState("inertWithData");
+          setProcessingState("inert");
         });
       } catch (err) {
         // Ignore error if it is a cancelation error; this is expected
@@ -318,10 +320,9 @@ function App() {
     effectInner();
 
     return () => {
-      isRelevant = false;
+      hasCleanedUp = true;
+      setProcessingState("inert");
     };
-
-    // setAwaitingShareTarget(false)
   }, []);
 
   return (

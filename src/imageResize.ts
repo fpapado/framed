@@ -19,10 +19,6 @@ imageReducer._calculate_size = function (env: any) {
       ? "landscape"
       : "portrait";
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log({ imageOrientation, isRotated90Deg });
-  }
-
   // Landscape image, or rotated portrait: scale to fit the width
   if (
     (imageOrientation === "landscape" && !isRotated90Deg) ||

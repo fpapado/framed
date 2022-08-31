@@ -97,15 +97,15 @@ function App() {
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
   const isLoading = processingState === "processing" || isDrawTransitionPending;
 
-  const updateResizedCanvas = useCallback(
+  const updateCanvas = useCallback(
     async ({
       blob,
-      maxWidth,
-      maxHeight,
+      aspectRatio,
+      bgColor,
     }: {
       blob?: Blob;
-      maxWidth: number;
-      maxHeight: number;
+      aspectRatio: AspectRatio;
+      bgColor: string;
     }) => {
       if (blob) {
         try {
@@ -116,8 +116,8 @@ function App() {
           processingAbortController.current = new AbortController();
 
           const reducedCanvas = await resizeToCanvas(blob, {
-            maxWidth: maxWidth - OPTIONS.border * 2,
-            maxHeight: maxHeight - OPTIONS.border * 2,
+            maxWidth: aspectRatio.width - OPTIONS.border * 2,
+            maxHeight: aspectRatio.height - OPTIONS.border * 2,
             signal: processingAbortController.current.signal,
           });
 
@@ -126,13 +126,23 @@ function App() {
 
           // Update the stored canvas for future operations (e.g. re-drawing after changing colour)
           canvasSrcRef.current = reducedCanvas;
+
+          // Re-draw the image
+          drawImageWithBackground({
+            canvasSrc: reducedCanvas,
+            canvasDest: canvasDestRef.current,
+            border: OPTIONS.border,
+            aspectRatio,
+            bgColor,
+          });
+
           setProcessingState("inert");
         } catch (err) {
           // Ignore error if it is a cancelation error; this is expected
           if (err instanceof DOMException && err.name === "AbortError") {
             return;
           }
-          console.error(err);
+          console.error("Unaccounted error: ", err);
           setProcessingState("error");
         }
       }
@@ -163,23 +173,10 @@ function App() {
       // Remove the ?share-target from the URL
       window.history.replaceState("", "", "/");
 
-      await updateResizedCanvas({
+      await updateCanvas({
         blob: file,
-        maxWidth: initialAspectRatio.width - OPTIONS.border * 2,
-        maxHeight: initialAspectRatio.height - OPTIONS.border * 2,
-      });
-
-      if (hasCleanedUp) return;
-
-      startDrawTransition(() => {
-        drawImageWithBackground({
-          canvasSrc: canvasSrcRef.current,
-          canvasDest: canvasDestRef.current,
-          border: OPTIONS.border,
-          aspectRatio: initialAspectRatio,
-          bgColor: initialBgColor,
-        });
-        setProcessingState("inert");
+        aspectRatio: initialAspectRatio,
+        bgColor: initialBgColor,
       });
     }
 
@@ -189,7 +186,7 @@ function App() {
       hasCleanedUp = true;
       setProcessingState("inert");
     };
-  }, [updateResizedCanvas]);
+  }, [updateCanvas]);
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -244,24 +241,13 @@ function App() {
       setAspectRatio(newAspectRatio);
 
       // Make a new resized image from the original file, if needed
-      await updateResizedCanvas({
+      await updateCanvas({
         blob: originalFileRef.current,
-        maxWidth: newAspectRatio.width,
-        maxHeight: newAspectRatio.height,
-      });
-
-      // Draw the image again
-      startDrawTransition(() => {
-        drawImageWithBackground({
-          canvasSrc: canvasSrcRef.current,
-          canvasDest: canvasDestRef.current,
-          border: OPTIONS.border,
-          aspectRatio: newAspectRatio,
-          bgColor,
-        });
+        aspectRatio: newAspectRatio,
+        bgColor,
       });
     },
-    [bgColor, updateResizedCanvas]
+    [bgColor, updateCanvas]
   );
 
   const selectFile = useCallback(
@@ -270,23 +256,13 @@ function App() {
       setFilename(file.name);
       originalFileRef.current = file;
 
-      await updateResizedCanvas({
+      await updateCanvas({
         blob: file,
-        maxWidth: aspectRatio.width - OPTIONS.border * 2,
-        maxHeight: aspectRatio.height - OPTIONS.border * 2,
-      });
-
-      startDrawTransition(() => {
-        drawImageWithBackground({
-          canvasDest: canvasDestRef.current,
-          canvasSrc: canvasSrcRef.current,
-          border: OPTIONS.border,
-          aspectRatio: aspectRatio,
-          bgColor: bgColor,
-        });
+        aspectRatio: aspectRatio,
+        bgColor,
       });
     },
-    [aspectRatio, bgColor, updateResizedCanvas]
+    [aspectRatio, bgColor, updateCanvas]
   );
 
   const saveFile = useCallback(() => {

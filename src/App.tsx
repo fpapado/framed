@@ -16,67 +16,8 @@ import React, {
   useEffect,
 } from "react";
 
-// @ts-ignore
-import ImageBlobReduce from "image-blob-reduce";
-
-const reducer = new ImageBlobReduce();
-
-reducer._calculate_size = function (env: any) {
-  // Override with a "fit maximally" function
-  let scale_factor;
-
-  // Android flips photos with EXIF, which can cause images to be rotated to the other orientation
-  // This means that the math for portrait images is treated as landscape and vice-versa.
-  // This causes the wrong fit, because orientation matters in how we fit!
-  // @see https://sirv.com/help/articles/rotate-photos-to-be-upright/
-  const isRotated90Deg = env.orientation === 5 || env.orientation === 6;
-  const imageOrientation =
-    env.image.width === env.image.height
-      ? "square"
-      : env.image.width > env.image.height
-      ? "landscape"
-      : "portrait";
-
-  if (process.env.NODE_ENV !== "production") {
-    console.log({ imageOrientation, isRotated90Deg });
-  }
-
-  // Landscape image, or rotated portrait: scale to fit the width
-  if (
-    (imageOrientation === "landscape" && !isRotated90Deg) ||
-    (imageOrientation === "portrait" && isRotated90Deg)
-  ) {
-    scale_factor =
-      env.opts.maxWidth / Math.max(env.image.width, env.image.height);
-  }
-  // Portrait image, or rotated landscape: scale to fit the height
-  else if (
-    (imageOrientation === "portrait" && !isRotated90Deg) ||
-    (imageOrientation === "landscape" && isRotated90Deg)
-  ) {
-    scale_factor =
-      env.opts.maxHeight / Math.max(env.image.width, env.image.height);
-  }
-  // Square image: scale to fit the shortest dimension
-  else {
-    scale_factor =
-      Math.min(env.opts.maxHeight, env.opts.maxWidth) /
-      Math.max(env.image.width, env.image.height);
-  }
-
-  if (scale_factor > 1) scale_factor = 1;
-
-  env.transform_width = Math.max(Math.round(env.image.width * scale_factor), 1);
-  env.transform_height = Math.max(
-    Math.round(env.image.height * scale_factor),
-    1
-  );
-
-  // Info for user plugins, to check if scaling applied
-  env.scale_factor = scale_factor;
-
-  return Promise.resolve(env);
-};
+import { resizeToCanvas } from "./imageResize";
+import { drawImageWithBackground } from "./drawing";
 
 const OPTIONS = {
   /** Border in pixels */
@@ -85,7 +26,8 @@ const OPTIONS = {
 };
 
 type AspectRatioId = "1x1" | "4x5";
-type AspectRatio = {
+
+export type AspectRatio = {
   id: AspectRatioId;
   label: string;
   width: number;
@@ -99,12 +41,6 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
     width: 2000,
     height: 2000,
   },
-  // "3x2": {
-  //   label: "3x2",
-  //   id: "3x2",
-  //   width: 2000,
-  //   height: 1333,
-  // },
   "4x5": {
     label: "4x5",
     id: "4x5",
@@ -113,85 +49,7 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
   },
 };
 
-/**
- * Draw an image with a specified background onto a canvas, fitting to the middle
- * @param canvasDest
- */
-function drawImageWithBackground({
-  canvasDest,
-  canvasSrc,
-  aspectRatio,
-  bgColor,
-}: {
-  canvasSrc?: HTMLCanvasElement | null;
-  canvasDest: HTMLCanvasElement | null;
-  aspectRatio: AspectRatio;
-  bgColor: string;
-}) {
-  const canvasDestCtx = canvasDest?.getContext("2d");
-
-  if (!canvasDest || !canvasDestCtx) {
-    console.error("No destination canvas found!");
-    return;
-  }
-
-  // Set width/height
-  canvasDest.width = aspectRatio.width;
-  canvasDest.height = aspectRatio.height;
-
-  // First, draw background
-  canvasDestCtx.fillStyle = bgColor;
-  canvasDestCtx.fillRect(0, 0, aspectRatio.width, aspectRatio.height);
-
-  // Then, draw scaled image, if specified
-  if (canvasSrc) {
-    const orientation =
-      canvasSrc.width > canvasSrc.height
-        ? "landscape"
-        : canvasSrc.width < canvasSrc.height
-        ? "portrait"
-        : "square";
-
-    let dx = 0;
-    let dy = 0;
-
-    if (orientation === "landscape") {
-      dx = 0 + OPTIONS.border;
-      dy = (aspectRatio.height - canvasSrc.height) / 2;
-    } else if (orientation === "portrait") {
-      dx = (aspectRatio.width - canvasSrc.width) / 2;
-      dy = 0 + OPTIONS.border;
-    } else {
-      dx = (aspectRatio.width - canvasSrc.width) / 2;
-      dy = (aspectRatio.height - canvasSrc.height) / 2;
-    }
-
-    canvasDestCtx.drawImage(canvasSrc, dx, dy);
-  }
-}
-
 type ProcessingState = "inert" | "processing" | "error";
-
-/**
- * Create a cancelation token, which will reject if aborted, based on a signal.
- * This is backed by an AbortController/AbortSignal, which allows us to cancel the operations
- * without keeping a reference to them; we only need a reference to the controller.
- */
-function createCancelationToken(signal: AbortSignal) {
-  return new Promise((_resolve, reject) => {
-    // It's possible the signal is already aborted!
-    if (signal.aborted) {
-      console.log("Already aborted: Canceled operation in flight");
-      reject(signal.reason);
-    }
-
-    // Attach a listener to the 'abort' event, in case it gets aborted in the future
-    signal.addEventListener("abort", () => {
-      console.log("Abort event: Canceled operation in flight");
-      reject(signal.reason);
-    });
-  });
-}
 
 function App() {
   const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
@@ -269,6 +127,7 @@ function App() {
         drawImageWithBackground({
           canvasSrc: canvasSrcRef.current,
           canvasDest: canvasDestRef.current,
+          border: OPTIONS.border,
           aspectRatio,
           bgColor: newColor,
         });
@@ -299,14 +158,11 @@ function App() {
           processingAbortController.current?.abort();
           processingAbortController.current = new AbortController();
 
-          // TODO: Cancelable process here, with signal and cleanup
-          const reducedCanvas = (await reducer.toCanvas(originalFile, {
+          const reducedCanvas = await resizeToCanvas(originalFile, {
             maxWidth: newAspectRatio.width - OPTIONS.border * 2,
             maxHeight: newAspectRatio.height - OPTIONS.border * 2,
-            cancelToken: createCancelationToken(
-              processingAbortController.current.signal
-            ),
-          })) as HTMLCanvasElement;
+            signal: processingAbortController.current.signal,
+          });
 
           // Reset the abort controller, because it is no longer relevant
           processingAbortController.current = undefined;
@@ -318,6 +174,7 @@ function App() {
           drawImageWithBackground({
             canvasSrc: canvasSrcRef.current,
             canvasDest: canvasDestRef.current,
+            border: OPTIONS.border,
             aspectRatio: newAspectRatio,
             bgColor,
           });
@@ -348,13 +205,11 @@ function App() {
         processingAbortController.current?.abort();
         processingAbortController.current = new AbortController();
 
-        const reducedCanvas = (await reducer.toCanvas(file, {
+        const reducedCanvas = await resizeToCanvas(file, {
           maxWidth: aspectRatio.width - OPTIONS.border * 2,
           maxHeight: aspectRatio.height - OPTIONS.border * 2,
-          cancelToken: createCancelationToken(
-            processingAbortController.current.signal
-          ),
-        })) as HTMLCanvasElement;
+          signal: processingAbortController.current.signal,
+        });
 
         // Reset the abort controller, because it is no longer relevant
         processingAbortController.current = undefined;
@@ -365,6 +220,7 @@ function App() {
         drawImageWithBackground({
           canvasDest: canvasDestRef.current,
           canvasSrc: canvasSrcRef.current,
+          border: OPTIONS.border,
           aspectRatio: aspectRatio,
           bgColor: bgColor,
         });

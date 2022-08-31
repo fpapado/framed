@@ -1,3 +1,8 @@
+// TODO: Eye dropper for all platforms
+// TODO: Share target
+// TODO: Custom border
+// TODO: Custom size
+// TODO: Custom jpeg compression
 import "./App.css";
 
 import { fileOpen, FileWithHandle, fileSave } from "browser-fs-access";
@@ -20,17 +25,39 @@ reducer._calculate_size = function (env: any) {
   // Override with a "fit maximally" function
   let scale_factor;
 
-  // Landscape image: scale to fit the width
-  if (env.image.width > env.image.height) {
+  // Android flips photos with EXIF, which can cause images to be rotated to the other orientation
+  // This means that the math for portrait images is treated as landscape and vice-versa.
+  // This causes the wrong fit, because orientation matters in how we fit!
+  // @see https://sirv.com/help/articles/rotate-photos-to-be-upright/
+  const isRotated90Deg = env.orientation === 5 || env.orientation === 6;
+  const imageOrientation =
+    env.image.width === env.image.height
+      ? "square"
+      : env.image.width > env.image.height
+      ? "landscape"
+      : "portrait";
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log({ imageOrientation, isRotated90Deg });
+  }
+
+  // Landscape image, or rotated portrait: scale to fit the width
+  if (
+    (imageOrientation === "landscape" && !isRotated90Deg) ||
+    (imageOrientation === "portrait" && isRotated90Deg)
+  ) {
     scale_factor =
       env.opts.maxWidth / Math.max(env.image.width, env.image.height);
   }
-  // Portrait image: scale to fit the height
-  else if (env.image.width < env.image.height) {
+  // Portrait image, or rotated landscape: scale to fit the height
+  else if (
+    (imageOrientation === "portrait" && !isRotated90Deg) ||
+    (imageOrientation === "landscape" && isRotated90Deg)
+  ) {
     scale_factor =
       env.opts.maxHeight / Math.max(env.image.width, env.image.height);
   }
-  // Landscape image: scale to fit the shortest dimension
+  // Square image: scale to fit the shortest dimension
   else {
     scale_factor =
       Math.min(env.opts.maxHeight, env.opts.maxWidth) /
@@ -64,8 +91,6 @@ type AspectRatio = {
   width: number;
   height: number;
 };
-
-// TODO: Cancelation with pica cancelation token
 
 const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
   "1x1": {

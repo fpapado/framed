@@ -97,6 +97,77 @@ function App() {
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
   const isLoading = processingState === "processing" || isDrawTransitionPending;
 
+  /** Effect to listen for the share target and receive an image file */
+  useEffect(() => {
+    /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
+    let hasCleanedUp = false;
+    const awaitingShareTarget = new URL(window.location.href).searchParams.has(
+      "share-target"
+    );
+
+    if (!awaitingShareTarget) {
+      return;
+    }
+
+    console.info("Awaiting share target");
+
+    async function effectInner() {
+      setProcessingState("processing");
+      const file = await swBridge.getSharedImage();
+
+      if (hasCleanedUp) return;
+
+      // Remove the ?share-target from the URL
+      window.history.replaceState("", "", "/");
+
+      try {
+        if (file) {
+          // Cancel existing tasks and start a new one
+          processingAbortController.current?.abort();
+          processingAbortController.current = new AbortController();
+
+          const reducedCanvas = await resizeToCanvas(file, {
+            maxWidth: initialAspectRatio.width - OPTIONS.border * 2,
+            maxHeight: initialAspectRatio.height - OPTIONS.border * 2,
+            signal: processingAbortController.current.signal,
+          });
+
+          // Reset the abort controller, because it is no longer relevant
+          processingAbortController.current = undefined;
+
+          canvasSrcRef.current = reducedCanvas;
+        }
+
+        if (hasCleanedUp) return;
+
+        startDrawTransition(() => {
+          drawImageWithBackground({
+            canvasSrc: canvasSrcRef.current,
+            canvasDest: canvasDestRef.current,
+            border: OPTIONS.border,
+            aspectRatio: initialAspectRatio,
+            bgColor: initialBgColor,
+          });
+          setProcessingState("inert");
+        });
+      } catch (err) {
+        // Ignore error if it is a cancelation error; this is expected
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        console.error(err);
+        setProcessingState("error");
+      }
+    }
+
+    effectInner();
+
+    return () => {
+      hasCleanedUp = true;
+      setProcessingState("inert");
+    };
+  }, []);
+
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
     const canvasDest = canvasDestRef.current;
@@ -292,77 +363,6 @@ function App() {
       0.75
     );
   }, [aspectRatio, filename]);
-
-  /** Effect to listen for the share target and receive an image file */
-  useEffect(() => {
-    /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
-    let hasCleanedUp = false;
-    const awaitingShareTarget = new URL(window.location.href).searchParams.has(
-      "share-target"
-    );
-
-    if (!awaitingShareTarget) {
-      return;
-    }
-
-    console.info("Awaiting share target");
-
-    async function effectInner() {
-      setProcessingState("processing");
-      const file = await swBridge.getSharedImage();
-
-      if (hasCleanedUp) return;
-
-      // Remove the ?share-target from the URL
-      window.history.replaceState("", "", "/");
-
-      try {
-        if (file) {
-          // Cancel existing tasks and start a new one
-          processingAbortController.current?.abort();
-          processingAbortController.current = new AbortController();
-
-          const reducedCanvas = await resizeToCanvas(file, {
-            maxWidth: initialAspectRatio.width - OPTIONS.border * 2,
-            maxHeight: initialAspectRatio.height - OPTIONS.border * 2,
-            signal: processingAbortController.current.signal,
-          });
-
-          // Reset the abort controller, because it is no longer relevant
-          processingAbortController.current = undefined;
-
-          canvasSrcRef.current = reducedCanvas;
-        }
-
-        if (hasCleanedUp) return;
-
-        startDrawTransition(() => {
-          drawImageWithBackground({
-            canvasSrc: canvasSrcRef.current,
-            canvasDest: canvasDestRef.current,
-            border: OPTIONS.border,
-            aspectRatio: initialAspectRatio,
-            bgColor: initialBgColor,
-          });
-          setProcessingState("inert");
-        });
-      } catch (err) {
-        // Ignore error if it is a cancelation error; this is expected
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
-        console.error(err);
-        setProcessingState("error");
-      }
-    }
-
-    effectInner();
-
-    return () => {
-      hasCleanedUp = true;
-      setProcessingState("inert");
-    };
-  }, []);
 
   return (
     <>

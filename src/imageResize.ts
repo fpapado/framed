@@ -46,7 +46,13 @@ imageReducer._calculate_size = function (env: any) {
       Math.max(env.image.width, env.image.height);
   }
 
-  if (scale_factor > 1) scale_factor = 1;
+  if (scale_factor > 1) {
+    console.warn(
+      "The image is smaller than the resize dimensions; will upscale."
+    );
+    // This was here originally, to prevent upscaling
+    // scale_factor = 1;
+  }
 
   env.transform_width = Math.max(Math.round(env.image.width * scale_factor), 1);
   env.transform_height = Math.max(

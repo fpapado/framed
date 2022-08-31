@@ -301,11 +301,11 @@ function App() {
       "share-target"
     );
 
-    console.info("Awaiting share target");
-
     if (!awaitingShareTarget) {
       return;
     }
+
+    console.info("Awaiting share target");
 
     async function effectInner() {
       setProcessingState("processing");

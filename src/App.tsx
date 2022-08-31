@@ -15,6 +15,7 @@ import React, {
   PropsWithChildren,
   useEffect,
 } from "react";
+import * as swBridge from "./swBridge";
 
 import { resizeToCanvas } from "./imageResize";
 import { drawImageWithBackground } from "./drawing";
@@ -51,10 +52,10 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
 
 type ProcessingState = "inert" | "processing" | "error" | "inertWithData";
 
-function App() {
-  const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
-  const initialBgColor = "#ffffff";
+const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
+const initialBgColor = "#ffffff";
 
+function App() {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
   const canvasSrcRef = useRef<HTMLCanvasElement>();
@@ -252,6 +253,76 @@ function App() {
       0.75
     );
   }, [aspectRatio.id, filename]);
+
+  useEffect(() => {
+    /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
+    let isRelevant = true;
+    const awaitingShareTarget = new URL(window.location.href).searchParams.has(
+      "share-target"
+    );
+
+    console.info("Awaiting share target");
+
+    if (!awaitingShareTarget) {
+      return;
+    }
+
+    async function effectInner() {
+      const file = await swBridge.getSharedImage();
+
+      if (!isRelevant) return;
+
+      // Remove the ?share-target from the URL
+      window.history.replaceState("", "", "/");
+
+      try {
+        if (file) {
+          // Cancel existing tasks and start a new one
+          processingAbortController.current?.abort();
+          processingAbortController.current = new AbortController();
+
+          const reducedCanvas = await resizeToCanvas(file, {
+            maxWidth: initialAspectRatio.width - OPTIONS.border * 2,
+            maxHeight: initialAspectRatio.height - OPTIONS.border * 2,
+            signal: processingAbortController.current.signal,
+          });
+
+          // Reset the abort controller, because it is no longer relevant
+          processingAbortController.current = undefined;
+
+          canvasSrcRef.current = reducedCanvas;
+        }
+
+        if (!isRelevant) return;
+
+        startDrawTransition(() => {
+          drawImageWithBackground({
+            canvasSrc: canvasSrcRef.current,
+            canvasDest: canvasDestRef.current,
+            border: OPTIONS.border,
+            aspectRatio: initialAspectRatio,
+            bgColor: initialBgColor,
+          });
+          setProcessingState("inertWithData");
+        });
+      } catch (err) {
+        // Ignore error if it is a cancelation error; this is expected
+        if (err instanceof DOMException && err.name === "AbortError") {
+          return;
+        }
+        console.error(err);
+        setProcessingState("error");
+      }
+    }
+
+    effectInner();
+
+    return () => {
+      isRelevant = false;
+    };
+
+    // setAwaitingShareTarget(false)
+  }, []);
 
   return (
     <>

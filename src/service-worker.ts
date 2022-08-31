@@ -79,3 +79,60 @@ self.addEventListener("message", (event) => {
 });
 
 // Any other custom service worker logic can go here.
+
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+
+  // Don't care about other-origin URLs
+  if (url.origin !== location.origin) return;
+
+  if (
+    url.pathname === "/" &&
+    url.searchParams.has("share-target") &&
+    event.request.method === "POST"
+  ) {
+    serveShareTarget(event);
+    return;
+  }
+});
+
+export function serveShareTarget(event: FetchEvent): void {
+  const dataPromise = event.request.formData();
+
+  // Redirect so the user can refresh the page without resending data.
+  event.respondWith(Response.redirect("/?share-target"));
+
+  event.waitUntil(
+    (async function () {
+      // The page sends this message to tell the service worker it's ready to receive the file.
+      await nextMessage("share-ready");
+      const client = await self.clients.get(event.resultingClientId);
+      const data = await dataPromise;
+      const file = data.get("file");
+      client?.postMessage({ file, action: "load-image" });
+    })()
+  );
+}
+
+const nextMessageResolveMap = new Map<string, (() => void)[]>();
+
+/**
+ * Wait on a message with a particular event.data value.
+ *
+ * @param dataVal The event.data value.
+ */
+function nextMessage(dataVal: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (!nextMessageResolveMap.has(dataVal)) {
+      nextMessageResolveMap.set(dataVal, []);
+    }
+    nextMessageResolveMap.get(dataVal)!.push(resolve);
+  });
+}
+
+self.addEventListener("message", (event) => {
+  const resolvers = nextMessageResolveMap.get(event.data);
+  if (!resolvers) return;
+  nextMessageResolveMap.delete(event.data);
+  for (const resolve of resolvers) resolve();
+});

@@ -9,7 +9,7 @@
   "theme_color": "#fffff1",
   "background_color": "#fffff1",
   "share_target": {
-    "action": "/?utm_medium=PWA&utm_source=share-target&share-target",
+    "action": "/?share-target",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": { "files": [{ "name": "file", "accept": ["image/*"] }] }

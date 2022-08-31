@@ -28,7 +28,7 @@ const OPTIONS = {
   aspectRatio: "4x5" as AspectRatioId,
 };
 
-type AspectRatioId = "1x1" | "4x5";
+type AspectRatioId = "1x1" | "4x5" | "9x16";
 
 export type AspectRatio = {
   id: AspectRatioId;
@@ -49,6 +49,12 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
     id: "4x5",
     width: 1600,
     height: 2000,
+  },
+  "9x16": {
+    label: "9x16",
+    id: "9x16",
+    width: 1080,
+    height: 1920,
   },
 };
 

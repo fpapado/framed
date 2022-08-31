@@ -49,7 +49,7 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
   },
 };
 
-type ProcessingState = "inert" | "processing" | "error";
+type ProcessingState = "inert" | "processing" | "error" | "inertWithData";
 
 function App() {
   const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
@@ -68,7 +68,6 @@ function App() {
 
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
-  const [hasCanvasData, setHasCanvasData] = useState(false);
 
   // State/options based on user selections
   const [bgColor, setBgColor] = useState(initialBgColor);
@@ -178,8 +177,8 @@ function App() {
             aspectRatio: newAspectRatio,
             bgColor,
           });
+          setProcessingState("inertWithData");
         });
-        setProcessingState("inert");
       } catch (err) {
         // Ignore error if it is a cancelation error; this is expected
         if (err instanceof DOMException && err.name === "AbortError") {
@@ -215,17 +214,17 @@ function App() {
         processingAbortController.current = undefined;
         canvasSrcRef.current = reducedCanvas;
 
-        setHasCanvasData(true);
+        startDrawTransition(() => {
+          drawImageWithBackground({
+            canvasDest: canvasDestRef.current,
+            canvasSrc: canvasSrcRef.current,
+            border: OPTIONS.border,
+            aspectRatio: aspectRatio,
+            bgColor: bgColor,
+          });
 
-        drawImageWithBackground({
-          canvasDest: canvasDestRef.current,
-          canvasSrc: canvasSrcRef.current,
-          border: OPTIONS.border,
-          aspectRatio: aspectRatio,
-          bgColor: bgColor,
+          setProcessingState("inertWithData");
         });
-
-        setProcessingState("inert");
       } catch (err) {
         // Ignore error if it is a cancelation error; this is expected
         if (err instanceof DOMException && err.name === "AbortError") {
@@ -243,7 +242,9 @@ function App() {
       (blob) => {
         if (blob) {
           fileSave(blob, {
-            fileName: filename && `framed-${aspectRatio.id}-${filename}`,
+            fileName: `framed-${aspectRatio.id}-${
+              filename ? filename : "canvas"
+            }`,
           });
         }
       },
@@ -293,23 +294,13 @@ function App() {
               </fieldset>
             </div>
             <FilePicker onChange={selectFile}>Pick image</FilePicker>
-            <button
-              className="DownloadButton"
-              type="button"
-              onClick={saveFile}
-              disabled={!hasCanvasData}
-            >
+            <button className="DownloadButton" type="button" onClick={saveFile}>
               Save
             </button>
           </form>
           <div className="CanvasArea">
             <div className="CanvasWrapper">
-              <canvas
-                className={`PreviewCanvas ${
-                  hasCanvasData ? "PreviewCanvas--hasData" : ""
-                }`}
-                ref={canvasDestRef}
-              ></canvas>
+              <canvas className="PreviewCanvas" ref={canvasDestRef}></canvas>
               {/* Consolidated loading indicator on top of the canvas */}
               {isLoading && <div className="LoadingIndicator">Loading...</div>}
               {processingState === "error" && (

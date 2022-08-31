@@ -7,47 +7,18 @@ imageReducer._calculate_size = function (env: any) {
   // Override with a "fit maximally" function
   let scale_factor;
 
-  // Android flips photos with EXIF, which can cause images to be rotated to the other orientation
-  // This means that the math for portrait images is treated as landscape and vice-versa.
-  // This causes the wrong fit, because orientation matters in how we fit!
-  // @see https://sirv.com/help/articles/rotate-photos-to-be-upright/
-  const isRotated90Deg = env.orientation === 5 || env.orientation === 6;
-  const imageOrientation =
-    env.image.width === env.image.height
-      ? "square"
-      : env.image.width > env.image.height
-      ? "landscape"
-      : "portrait";
-
-  // Landscape image, or rotated portrait: scale to fit the width
-  if (
-    (imageOrientation === "landscape" && !isRotated90Deg) ||
-    (imageOrientation === "portrait" && isRotated90Deg)
-  ) {
-    scale_factor =
-      env.opts.maxWidth / Math.max(env.image.width, env.image.height);
-  }
-  // Portrait image, or rotated landscape: scale to fit the height
-  else if (
-    (imageOrientation === "portrait" && !isRotated90Deg) ||
-    (imageOrientation === "landscape" && isRotated90Deg)
-  ) {
-    scale_factor =
-      env.opts.maxHeight / Math.max(env.image.width, env.image.height);
-  }
-  // Square image: scale to fit the shortest dimension
-  else {
-    scale_factor =
-      Math.min(env.opts.maxHeight, env.opts.maxWidth) /
-      Math.max(env.image.width, env.image.height);
-  }
+  // Scale in a way that takes into account whether the diagonal of the output aspect ratio is larger than that of the image itself
+  // If it is larger, we must scale based on the widths matching (and then proportionately for height)
+  // If it is larger, we must scale based on the heights matching (and then proportionately for width)
+  scale_factor = Math.min(
+    env.opts.maxWidth / env.image.width,
+    env.opts.maxHeight / env.image.height
+  );
 
   if (scale_factor > 1) {
     console.warn(
       "The image is smaller than the resize dimensions; will upscale."
     );
-    // This was here originally, to prevent upscaling
-    // scale_factor = 1;
   }
 
   env.transform_width = Math.max(Math.round(env.image.width * scale_factor), 1);

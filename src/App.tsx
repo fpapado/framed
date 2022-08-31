@@ -117,7 +117,7 @@ function App() {
       initialAspectRatio.width,
       initialAspectRatio.height
     );
-  }, [initialAspectRatio]);
+  }, []);
 
   const changeBgColor = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {

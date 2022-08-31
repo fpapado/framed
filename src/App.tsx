@@ -1,8 +1,7 @@
 // TODO: Eye dropper for all platforms
-// TODO: Share target
 // TODO: Custom border
 // TODO: Custom size
-// TODO: Custom jpeg compression
+// TODO: Custom jpeg compression ratio
 import "./App.css";
 
 import { fileOpen, FileWithHandle, fileSave } from "browser-fs-access";

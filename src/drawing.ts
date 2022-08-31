@@ -34,25 +34,18 @@ export function drawImageWithBackground({
 
   // Then, draw scaled image, if specified
   if (canvasSrc) {
-    const orientation =
-      canvasSrc.width > canvasSrc.height
-        ? "landscape"
-        : canvasSrc.width < canvasSrc.height
-        ? "portrait"
-        : "square";
+    let dx = (aspectRatio.width - canvasSrc.width) / 2;
+    let dy = (aspectRatio.height - canvasSrc.height) / 2;
 
-    let dx = 0;
-    let dy = 0;
-
-    if (orientation === "landscape") {
-      dx = 0 + border;
-      dy = (aspectRatio.height - canvasSrc.height) / 2;
-    } else if (orientation === "portrait") {
-      dx = (aspectRatio.width - canvasSrc.width) / 2;
-      dy = 0 + border;
-    } else {
-      dx = (aspectRatio.width - canvasSrc.width) / 2;
-      dy = (aspectRatio.height - canvasSrc.height) / 2;
+    if (process.env.NODE_ENV !== "production") {
+      console.table({
+        dx,
+        dy,
+        srcWidth: canvasSrc.width,
+        srcHeight: canvasSrc.height,
+        width: aspectRatio.width,
+        height: aspectRatio.height,
+      });
     }
 
     canvasDestCtx.drawImage(canvasSrc, dx, dy);

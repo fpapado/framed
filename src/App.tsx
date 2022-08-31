@@ -97,6 +97,49 @@ function App() {
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
   const isLoading = processingState === "processing" || isDrawTransitionPending;
 
+  const updateResizedCanvas = useCallback(
+    async ({
+      blob,
+      maxWidth,
+      maxHeight,
+    }: {
+      blob?: Blob;
+      maxWidth: number;
+      maxHeight: number;
+    }) => {
+      if (blob) {
+        try {
+          setProcessingState("processing");
+
+          // Cancel existing tasks and start a new one
+          processingAbortController.current?.abort();
+          processingAbortController.current = new AbortController();
+
+          const reducedCanvas = await resizeToCanvas(blob, {
+            maxWidth: maxWidth - OPTIONS.border * 2,
+            maxHeight: maxHeight - OPTIONS.border * 2,
+            signal: processingAbortController.current.signal,
+          });
+
+          // Reset the abort controller, because it is no longer relevant
+          processingAbortController.current = undefined;
+
+          // Update the stored canvas for future operations (e.g. re-drawing after changing colour)
+          canvasSrcRef.current = reducedCanvas;
+          setProcessingState("inert");
+        } catch (err) {
+          // Ignore error if it is a cancelation error; this is expected
+          if (err instanceof DOMException && err.name === "AbortError") {
+            return;
+          }
+          console.error(err);
+          setProcessingState("error");
+        }
+      }
+    },
+    []
+  );
+
   /** Effect to listen for the share target and receive an image file */
   useEffect(() => {
     /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
@@ -120,44 +163,24 @@ function App() {
       // Remove the ?share-target from the URL
       window.history.replaceState("", "", "/");
 
-      try {
-        if (file) {
-          // Cancel existing tasks and start a new one
-          processingAbortController.current?.abort();
-          processingAbortController.current = new AbortController();
+      await updateResizedCanvas({
+        blob: file,
+        maxWidth: initialAspectRatio.width - OPTIONS.border * 2,
+        maxHeight: initialAspectRatio.height - OPTIONS.border * 2,
+      });
 
-          const reducedCanvas = await resizeToCanvas(file, {
-            maxWidth: initialAspectRatio.width - OPTIONS.border * 2,
-            maxHeight: initialAspectRatio.height - OPTIONS.border * 2,
-            signal: processingAbortController.current.signal,
-          });
+      if (hasCleanedUp) return;
 
-          // Reset the abort controller, because it is no longer relevant
-          processingAbortController.current = undefined;
-
-          canvasSrcRef.current = reducedCanvas;
-        }
-
-        if (hasCleanedUp) return;
-
-        startDrawTransition(() => {
-          drawImageWithBackground({
-            canvasSrc: canvasSrcRef.current,
-            canvasDest: canvasDestRef.current,
-            border: OPTIONS.border,
-            aspectRatio: initialAspectRatio,
-            bgColor: initialBgColor,
-          });
-          setProcessingState("inert");
+      startDrawTransition(() => {
+        drawImageWithBackground({
+          canvasSrc: canvasSrcRef.current,
+          canvasDest: canvasDestRef.current,
+          border: OPTIONS.border,
+          aspectRatio: initialAspectRatio,
+          bgColor: initialBgColor,
         });
-      } catch (err) {
-        // Ignore error if it is a cancelation error; this is expected
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
-        console.error(err);
-        setProcessingState("error");
-      }
+        setProcessingState("inert");
+      });
     }
 
     effectInner();
@@ -166,7 +189,7 @@ function App() {
       hasCleanedUp = true;
       setProcessingState("inert");
     };
-  }, []);
+  }, [updateResizedCanvas]);
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -221,48 +244,24 @@ function App() {
       setAspectRatio(newAspectRatio);
 
       // Make a new resized image from the original file, if needed
-      setProcessingState("processing");
+      await updateResizedCanvas({
+        blob: originalFileRef.current,
+        maxWidth: newAspectRatio.width,
+        maxHeight: newAspectRatio.height,
+      });
 
-      const originalFile = originalFileRef.current;
-
-      try {
-        if (originalFile) {
-          // Cancel existing tasks and start a new one
-          processingAbortController.current?.abort();
-          processingAbortController.current = new AbortController();
-
-          const reducedCanvas = await resizeToCanvas(originalFile, {
-            maxWidth: newAspectRatio.width - OPTIONS.border * 2,
-            maxHeight: newAspectRatio.height - OPTIONS.border * 2,
-            signal: processingAbortController.current.signal,
-          });
-
-          // Reset the abort controller, because it is no longer relevant
-          processingAbortController.current = undefined;
-
-          canvasSrcRef.current = reducedCanvas;
-        }
-
-        startDrawTransition(() => {
-          drawImageWithBackground({
-            canvasSrc: canvasSrcRef.current,
-            canvasDest: canvasDestRef.current,
-            border: OPTIONS.border,
-            aspectRatio: newAspectRatio,
-            bgColor,
-          });
-          setProcessingState("inert");
+      // Draw the image again
+      startDrawTransition(() => {
+        drawImageWithBackground({
+          canvasSrc: canvasSrcRef.current,
+          canvasDest: canvasDestRef.current,
+          border: OPTIONS.border,
+          aspectRatio: newAspectRatio,
+          bgColor,
         });
-      } catch (err) {
-        // Ignore error if it is a cancelation error; this is expected
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
-        console.error(err);
-        setProcessingState("error");
-      }
+      });
     },
-    [bgColor]
+    [bgColor, updateResizedCanvas]
   );
 
   const selectFile = useCallback(
@@ -271,44 +270,23 @@ function App() {
       setFilename(file.name);
       originalFileRef.current = file;
 
-      setProcessingState("processing");
+      await updateResizedCanvas({
+        blob: file,
+        maxWidth: aspectRatio.width - OPTIONS.border * 2,
+        maxHeight: aspectRatio.height - OPTIONS.border * 2,
+      });
 
-      try {
-        // Cancel existing tasks and start a new one
-        processingAbortController.current?.abort();
-        processingAbortController.current = new AbortController();
-
-        const reducedCanvas = await resizeToCanvas(file, {
-          maxWidth: aspectRatio.width - OPTIONS.border * 2,
-          maxHeight: aspectRatio.height - OPTIONS.border * 2,
-          signal: processingAbortController.current.signal,
+      startDrawTransition(() => {
+        drawImageWithBackground({
+          canvasDest: canvasDestRef.current,
+          canvasSrc: canvasSrcRef.current,
+          border: OPTIONS.border,
+          aspectRatio: aspectRatio,
+          bgColor: bgColor,
         });
-
-        // Reset the abort controller, because it is no longer relevant
-        processingAbortController.current = undefined;
-        canvasSrcRef.current = reducedCanvas;
-
-        startDrawTransition(() => {
-          drawImageWithBackground({
-            canvasDest: canvasDestRef.current,
-            canvasSrc: canvasSrcRef.current,
-            border: OPTIONS.border,
-            aspectRatio: aspectRatio,
-            bgColor: bgColor,
-          });
-
-          setProcessingState("inert");
-        });
-      } catch (err) {
-        // Ignore error if it is a cancelation error; this is expected
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
-        console.error(err);
-        setProcessingState("error");
-      }
+      });
     },
-    [aspectRatio, bgColor]
+    [aspectRatio, bgColor, updateResizedCanvas]
   );
 
   const saveFile = useCallback(() => {

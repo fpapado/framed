@@ -93,13 +93,11 @@ function createCancelationToken(signal: AbortSignal) {
   return new Promise((_resolve, reject) => {
     // It's possible the signal is already aborted!
     if (signal.aborted) {
-      console.log("Already aborted: Canceled operation in flight");
       reject(signal.reason);
     }
 
     // Attach a listener to the 'abort' event, in case it gets aborted in the future
     signal.addEventListener("abort", () => {
-      console.log("Abort event: Canceled operation in flight");
       reject(signal.reason);
     });
   });

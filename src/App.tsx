@@ -20,6 +20,8 @@ import * as swBridge from "./swBridge";
 import { resizeToCanvas } from "./imageResize";
 import { drawImageWithBackground } from "./drawing";
 
+export const SUPPORTS_SHARE = Boolean(navigator.share);
+
 const OPTIONS = {
   /** Border in pixels */
   border: 64,
@@ -243,16 +245,53 @@ function App() {
       (blob) => {
         if (blob) {
           fileSave(blob, {
-            fileName: `framed-${aspectRatio.id}-${
-              filename ? filename : "canvas"
-            }`,
+            fileName: makeOutputFilename({
+              aspectRatio,
+              originalName: filename,
+            }),
           });
         }
       },
       "image/jpeg",
       0.75
     );
-  }, [aspectRatio.id, filename]);
+  }, [aspectRatio, filename]);
+
+  const shareFile = useCallback(() => {
+    const imageType = "image/jpeg";
+    canvasDestRef.current?.toBlob(
+      (blob) => {
+        if (!blob) return;
+
+        const file = new File(
+          [blob],
+          makeOutputFilename({ aspectRatio, originalName: filename }),
+          { type: imageType }
+        );
+
+        if (
+          SUPPORTS_SHARE &&
+          navigator.canShare &&
+          navigator.canShare({ files: [file] })
+        ) {
+          navigator
+            .share({
+              files: [file],
+            })
+            .then(() => {
+              console.log("Shared successfully");
+            })
+            .catch((err) => {
+              console.error("Error when sharing: ", err);
+            });
+        } else {
+          console.log("System does not support sharing files");
+        }
+      },
+      imageType,
+      0.75
+    );
+  }, [aspectRatio, filename]);
 
   /** Effect to listen for the share target and receive an image file */
   useEffect(() => {
@@ -330,7 +369,12 @@ function App() {
       <main>
         <h1>Framed</h1>
         <div className="WorkArea">
-          <form onSubmit={(ev) => ev.preventDefault} className="Controls">
+          <form
+            onSubmit={(ev) => {
+              ev.preventDefault();
+            }}
+            className="Controls"
+          >
             <div>
               <label htmlFor={ID.bgColorInput}>Background Color</label>
               <input
@@ -369,6 +413,11 @@ function App() {
             <button className="DownloadButton" type="button" onClick={saveFile}>
               Save
             </button>
+            {SUPPORTS_SHARE && (
+              <button className="ShareButton" type="button" onClick={shareFile}>
+                Share
+              </button>
+            )}
           </form>
           <div className="CanvasArea">
             <div className="CanvasWrapper">
@@ -437,6 +486,16 @@ function FilePicker({
       {children}
     </button>
   );
+}
+
+function makeOutputFilename({
+  aspectRatio,
+  originalName,
+}: {
+  aspectRatio: AspectRatio;
+  originalName?: string;
+}) {
+  return `framed-${aspectRatio.id}-${originalName ? originalName : "canvas"}`;
 }
 
 export default App;

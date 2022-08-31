@@ -16,6 +16,7 @@ input[type="color"] {
 }
 
 .FilePicker,
+.ShareButton,
 .DownloadButton {
   display: block;
   border: 1px solid black;
@@ -25,9 +26,6 @@ input[type="color"] {
   min-width: 44px;
   min-height: 44px;
   font-weight: 600;
-}
-
-.FilePicker {
   width: 100%;
 }
 
@@ -50,7 +48,6 @@ input[type="color"] {
 
 .DownloadButton {
   margin-top: 1rem;
-  width: 100%;
 }
 
 .CanvasWrapper {

@@ -8,13 +8,11 @@ export function drawImageWithBackground({
   canvasDest,
   canvasSrc,
   aspectRatio,
-  border = 0,
   bgColor,
 }: {
   canvasSrc?: HTMLCanvasElement | null;
   canvasDest: HTMLCanvasElement | null;
   aspectRatio: AspectRatio;
-  border?: number;
   bgColor: string;
 }) {
   const canvasDestCtx = canvasDest?.getContext("2d");

@@ -138,7 +138,6 @@ function App() {
         drawImageWithBackground({
           canvasSrc: canvasSrcRef.current,
           canvasDest: canvasDestRef.current,
-          border: OPTIONS.border,
           aspectRatio,
           bgColor,
         });

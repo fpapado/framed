@@ -4,15 +4,19 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+import { changeHtmlPreference, getPreferenceFromStorage } from "./darkMode";
 
 function init() {
+  const initialDarkModePreference = getPreferenceFromStorage();
+  changeHtmlPreference(initialDarkModePreference);
+
   const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
   );
 
   root.render(
     <React.StrictMode>
-      <App />
+      <App initialDarkModePreference={initialDarkModePreference} />
     </React.StrictMode>
   );
 

@@ -21,11 +21,50 @@
   box-sizing: border-box;
 }
 
+/* Color preferences */
+/* Default (light) */
 :root {
   --color-bg: #fffff1;
   --color-fg: #111;
   --color-divider: #111;
   --color-accent: #111;
+  --color-darkmode-fg: #111;
+  --color-darkmode-bg: #eee;
+  --color-darkmode-accent: #a295f1;
+}
+
+/* Explicit light/dark preference */
+[data-theme="alwaysLight"] {
+  --color-bg: #fffff1;
+  --color-fg: #111;
+  --color-divider: #111;
+  --color-accent: #111;
+}
+
+[data-theme="alwaysDark"] {
+  --color-bg: #111;
+  --color-fg: #fffff1;
+  --color-divider: #fffff1;
+  --color-accent: #a295f1;
+}
+
+/* Deferring to system */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --color-bg: #111;
+    --color-fg: #fffff1;
+    --color-divider: #fffff1;
+    --color-accent: #a295f1;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    --color-bg: #fffff1;
+    --color-fg: #111;
+    --color-divider: #111;
+    --color-accent: #111;
+  }
 }
 
 html {

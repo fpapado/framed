@@ -18,6 +18,7 @@ import * as swBridge from "./swBridge";
 
 import { resizeToCanvas } from "./imageResize";
 import { drawImageWithBackground } from "./drawing";
+import { DarkModeSetting, Preference, Preferences } from "./darkMode";
 
 export const SUPPORTS_SHARE = Boolean(navigator.share);
 
@@ -62,7 +63,11 @@ type ProcessingState = "inert" | "processing" | "error";
 const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
 const initialBgColor = "#ffffff";
 
-function App() {
+type Props = {
+  initialDarkModePreference?: Preference;
+};
+
+function App({ initialDarkModePreference = Preferences.System() }: Props) {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
   const canvasSrcRef = useRef<HTMLCanvasElement>();
@@ -393,22 +398,17 @@ function App() {
         </div>
       </main>
       <footer>
-        <footer>
-          <p>
-            Made with 🎞️ & 😓 by{" "}
-            <a
-              href="https://fotis.xyz"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Fotis Papadogeorgopoulos
-            </a>
-          </p>
-          <p>
-            You can use this app offline, by installing it via your browser's
-            "Add to Home Screen" functionality.
-          </p>
-        </footer>
+        <DarkModeSetting initialPreference={initialDarkModePreference} />
+        <p>
+          Made with 🎞️ & 😓 by{" "}
+          <a href="https://fotis.xyz" target="_blank" rel="noopener noreferrer">
+            Fotis Papadogeorgopoulos
+          </a>
+        </p>
+        <p>
+          You can use this app offline, by installing it via your browser's "Add
+          to Home Screen" functionality.
+        </p>
       </footer>
     </>
   );

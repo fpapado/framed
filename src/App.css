@@ -10,7 +10,7 @@ h1 {
 input[type="color"] {
   min-width: 88px;
   min-height: 44px;
-  background-color: #fff;
+  background-color: var(--color-bg);
   border: 1px solid var(--color-divider);
   border-radius: 2px;
 }
@@ -19,9 +19,9 @@ input[type="color"] {
 .ShareButton,
 .DownloadButton {
   display: block;
-  border: 1px solid black;
+  border: 1px solid var(--color-divider);
   border-radius: 2px;
-  background-color: white;
+  background-color: var(--color-bg);
   color: var(--color-fg);
   min-width: 44px;
   min-height: 44px;
@@ -42,8 +42,7 @@ input[type="color"] {
   display: block;
   max-width: 100%;
   width: 100%;
-  /* aspect-ratio: 1 / 1; */
-  border: 1px solid black;
+  border: 1px solid var(--color-divider);
 }
 
 .DownloadButton {
@@ -118,7 +117,8 @@ legend {
   border: 1px solid var(--color-divider);
   padding: 0.5rem;
   border-radius: 2px;
-  background-color: #fff;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
 }
 
 .Radio input[type="radio"] {
@@ -139,4 +139,36 @@ legend {
     justify-content: center;
     gap: 2rem;
   }
+}
+
+.DarkModeSetting {
+  display: flex;
+  max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0.25rem;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1rem;
+  border: 2px solid var(--color-divider);
+  border-radius: 8px;
+}
+
+.DarkModeSetting button {
+  display: block;
+  padding: 0.5rem;
+  /* Prompt buttons to have similar or same widths (8ch is ~the width of the word 'System') */
+  min-width: max(44px, 8ch);
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--color-bg);
+  font-weight: 600;
+  color: var(--color-darkmode-fg);
+  background-color: var(--color-darkmode-bg);
+  transition: background-color 400ms ease-out;
+}
+
+.DarkModeSetting button[aria-pressed="true"] {
+  background-color: var(--color-darkmode-accent);
 }

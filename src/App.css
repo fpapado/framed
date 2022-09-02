@@ -169,6 +169,8 @@ legend {
   font-weight: 600;
   color: var(--color-darkmode-fg);
   background-color: var(--color-darkmode-bg);
+  /* Dark mode button taps already have feedback in the form of animation or background transition, and this seems jarring */
+  -webkit-tap-highlight-color: transparent;
 }
 
 .DarkModeSetting .background {

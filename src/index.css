@@ -80,6 +80,12 @@ html {
   accent-color: var(--color-accent);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    transition: background-color 500ms ease-out;
+  }
+}
+
 body {
   height: 100%;
   margin: 0;

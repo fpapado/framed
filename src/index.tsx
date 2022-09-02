@@ -5,6 +5,10 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import { changeHtmlPreference, getPreferenceFromStorage } from "./darkMode";
+import { LazyMotion, MotionConfig } from "framer-motion";
+
+const loadFramerMotionFeatures = () =>
+  import("./framerFeatures").then((res) => res.default);
 
 function init() {
   const initialDarkModePreference = getPreferenceFromStorage();
@@ -16,7 +20,13 @@ function init() {
 
   root.render(
     <React.StrictMode>
-      <App initialDarkModePreference={initialDarkModePreference} />
+      {/* Enable lazy-loading of framer features */}
+      <LazyMotion features={loadFramerMotionFeatures} strict>
+        {/* Respect prefers-reduced-motion */}
+        <MotionConfig reducedMotion="user">
+          <App initialDarkModePreference={initialDarkModePreference} />
+        </MotionConfig>
+      </LazyMotion>
     </React.StrictMode>
   );
 

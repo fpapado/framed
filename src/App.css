@@ -189,3 +189,14 @@ legend {
   /* Needed to not be obscured by background */
   z-index: 2;
 }
+
+/* If the user prefers reduced motion, we no longer animate a shared background. Instead, we animate opacity, to keep some context. */
+@media (prefers-reduced-motion: reduce) {
+  .DarkModeSetting button {
+    transition: background-color 400ms ease-out;
+  }
+
+  .DarkModeSetting button[aria-pressed="true"] {
+    background-color: var(--color-darkmode-accent);
+  }
+}

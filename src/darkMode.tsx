@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { unionize, UnionOf } from "unionize";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export const Preferences = unionize({
   System: {},
@@ -75,7 +75,7 @@ export function DarkModeSetting({
         onClick={() => changeAndStorePreference(Preferences.System())}
       >
         {Preferences.is.System(preference) ? (
-          <motion.div className="background" layoutId="background" />
+          <m.div className="background" layoutId="background" />
         ) : null}
         <span className="label">System</span>
       </button>
@@ -84,7 +84,7 @@ export function DarkModeSetting({
         onClick={() => changeAndStorePreference(Preferences.AlwaysLight())}
       >
         {Preferences.is.AlwaysLight(preference) ? (
-          <motion.div className="background" layoutId="background" />
+          <m.div className="background" layoutId="background" />
         ) : null}
         <span className="label">Light</span>
       </button>
@@ -93,7 +93,7 @@ export function DarkModeSetting({
         onClick={() => changeAndStorePreference(Preferences.AlwaysDark())}
       >
         {Preferences.is.AlwaysDark(preference) ? (
-          <motion.div className="background" layoutId="background" />
+          <m.div className="background" layoutId="background" />
         ) : null}
         <span className="label">Dark</span>
       </button>

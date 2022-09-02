@@ -142,6 +142,7 @@ legend {
 }
 
 .DarkModeSetting {
+  --dm-border-radius: 8px;
   display: flex;
   max-width: fit-content;
   margin-left: auto;
@@ -151,24 +152,40 @@ legend {
   justify-content: center;
   gap: 0.5rem;
   border: 2px solid var(--color-divider);
-  border-radius: 8px;
+  border-radius: var(--dm-border-radius);
 }
 
 .DarkModeSetting button {
+  /* Needed for absolute positioning of animated background */
+  position: relative;
   display: block;
   padding: 0.5rem;
   /* Prompt buttons to have similar or same widths (8ch is ~the width of the word 'System') */
   min-width: max(44px, 8ch);
   min-height: 44px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--dm-border-radius);
   background-color: var(--color-bg);
   font-weight: 600;
   color: var(--color-darkmode-fg);
   background-color: var(--color-darkmode-bg);
-  transition: background-color 400ms ease-out;
 }
 
-.DarkModeSetting button[aria-pressed="true"] {
-  background-color: var(--color-darkmode-accent);
+.DarkModeSetting .background {
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  background: var(--color-darkmode-accent);
+  border-radius: var(--dm-border-radius);
+  /* Needed to not be obscured by other buttons when moving from last to first */
+  z-index: 1;
+}
+
+.DarkModeSetting .label {
+  position: relative;
+  /* Needed to not be obscured by background */
+  z-index: 2;
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { unionize, UnionOf } from "unionize";
+import { motion } from "framer-motion";
 
 export const Preferences = unionize({
   System: {},
@@ -73,19 +74,28 @@ export function DarkModeSetting({
         aria-pressed={Preferences.is.System(preference)}
         onClick={() => changeAndStorePreference(Preferences.System())}
       >
-        System
+        {Preferences.is.System(preference) ? (
+          <motion.div className="background" layoutId="background" />
+        ) : null}
+        <span className="label">System</span>
       </button>
       <button
         aria-pressed={Preferences.is.AlwaysLight(preference)}
         onClick={() => changeAndStorePreference(Preferences.AlwaysLight())}
       >
-        Light
+        {Preferences.is.AlwaysLight(preference) ? (
+          <motion.div className="background" layoutId="background" />
+        ) : null}
+        <span className="label">Light</span>
       </button>
       <button
         aria-pressed={Preferences.is.AlwaysDark(preference)}
         onClick={() => changeAndStorePreference(Preferences.AlwaysDark())}
       >
-        Dark
+        {Preferences.is.AlwaysDark(preference) ? (
+          <motion.div className="background" layoutId="background" />
+        ) : null}
+        <span className="label">Dark</span>
       </button>
     </div>
   );

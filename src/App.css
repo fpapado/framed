@@ -180,7 +180,7 @@ legend {
   right: 0;
   height: 100%;
   width: 100%;
-  background: var(--color-darkmode-accent);
+  background-color: var(--color-darkmode-accent);
   border-radius: var(--dm-border-radius);
   /* Needed to not be obscured by other buttons when moving from last to first */
   z-index: 1;
@@ -192,8 +192,17 @@ legend {
   z-index: 2;
 }
 
-/* If the user prefers reduced motion, we no longer animate a shared background. Instead, we animate opacity, to keep some context. */
+/* If the user prefers reduced motion, we no longer animate a shared background. 
+ * Instead, we animate opacity, to keep some context. 
+ */
 @media (prefers-reduced-motion: reduce) {
+  /* The background is still present, and just pops into place. 
+   * Its colour obscures the transition animation, so we set it to transparent to avoid that.
+  */
+  .DarkModeSetting .background {
+    background-color: transparent;
+  }
+
   .DarkModeSetting button {
     transition: background-color 400ms ease-out;
   }

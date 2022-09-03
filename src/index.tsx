@@ -6,10 +6,10 @@ import reportWebVitals from "./reportWebVitals";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import { changeHtmlPreference, getPreferenceFromStorage } from "./darkMode";
 import { setupRefreshOnControllerChange } from "./swBridge";
+import { ServiceWorkerManager } from "./ServiceWorkerUpdatePrompt";
 
 function init() {
   // Set up a listener to refresh the page when the new service worker takes over (this is done on-demand by the user)
-  let waitingRegistration: ServiceWorkerRegistration | undefined;
   setupRefreshOnControllerChange();
 
   const initialDarkModePreference = getPreferenceFromStorage();
@@ -21,19 +21,23 @@ function init() {
 
   root.render(
     <React.StrictMode>
-      <App
-        initialDarkModePreference={initialDarkModePreference}
-        waitingServiceWorkerRegistration={waitingRegistration}
-      />
+      <ServiceWorkerManager
+        registrationPromise={
+          new Promise((resolve, reject) => {
+            serviceWorkerRegistration.register({
+              // When the service worker is installed and waiting to take over, prompt the user to update
+              onUpdate: (registration) => {
+                console.info("Found waiting service worker");
+                resolve(registration);
+              },
+            });
+          })
+        }
+      >
+        <App initialDarkModePreference={initialDarkModePreference} />
+      </ServiceWorkerManager>
     </React.StrictMode>
   );
-
-  serviceWorkerRegistration.register({
-    // When the service worker is installed and waiting to take over, prompt the user to update
-    onUpdate: (registration) => {
-      waitingRegistration = registration;
-    },
-  });
 
   // If you want to start measuring performance in your app, pass a function
   // to log results (for example: reportWebVitals(console.log))

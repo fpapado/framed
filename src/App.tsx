@@ -71,13 +71,9 @@ const initialBgColor = "#ffffff";
 
 type Props = {
   initialDarkModePreference?: Preference;
-  waitingServiceWorkerRegistration?: ServiceWorkerRegistration;
 };
 
-function App({
-  initialDarkModePreference = Preferences.System(),
-  waitingServiceWorkerRegistration,
-}: Props) {
+function App({ initialDarkModePreference = Preferences.System() }: Props) {
   // Whether the user prefers reduced motion
   // NOTE: Unlike framer's built-in API, this one updates when the user updates their setting, without needing to reload the app
   // This is useful for long-running sites, or sometimes on Android when the PWA is kept alive
@@ -94,14 +90,8 @@ function App({
       <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "never"}>
         <>
           <main>
-            <h1>Framed</h1>
-            <div aria-live="polite" role="status">
-              {waitingServiceWorkerRegistration && (
-                <ServiceWorkerUpdatePrompt
-                  registration={waitingServiceWorkerRegistration}
-                />
-              )}
-            </div>
+            <h1>Framed v4</h1>
+            <ServiceWorkerUpdatePrompt />
             <MemoWorkArea />
           </main>
           <footer>

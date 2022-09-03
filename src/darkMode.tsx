@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { unionize, UnionOf } from "unionize";
 import { m } from "framer-motion";
 
@@ -51,52 +51,61 @@ export function changeHtmlPreference(pref: Preference) {
   document.documentElement.dataset.theme = preferenceToString(pref);
 }
 
+const allPreferences = [
+  Preferences.System(),
+  Preferences.AlwaysLight(),
+  Preferences.AlwaysDark(),
+].map((preference) => ({
+  id: preferenceToString(preference),
+  label: Preferences.match(preference, {
+    System: () => "System",
+    AlwaysLight: () => "Light",
+    AlwaysDark: () => "Dark",
+  }),
+  preference,
+}));
+
 export function DarkModeSetting({
   initialPreference,
 }: {
   initialPreference: Preference;
 }) {
-  const [preference, setPreference] = useState<Preference>(initialPreference);
-
-  useEffect(() => {
-    setPreference(getPreferenceFromStorage());
-  }, []);
+  const groupLabelId = useId();
+  const [userPreference, setUserPreference] =
+    useState<Preference>(initialPreference);
 
   const changeAndStorePreference = useCallback((pref: Preference) => {
-    setPreference(pref);
+    setUserPreference(pref);
     changeHtmlPreference(pref);
     storePreference(pref);
   }, []);
 
   return (
-    <div className="DarkModeSetting" role="group" aria-label="Colour scheme">
-      <button
-        aria-pressed={Preferences.is.System(preference)}
-        onClick={() => changeAndStorePreference(Preferences.System())}
+    <div className="DarkModeSetting">
+      <div className="GroupLabel" id={groupLabelId}>
+        Theme
+      </div>
+      <div
+        className="DarkModeSetting-Wrapper"
+        role="group"
+        aria-labelledby={groupLabelId}
       >
-        {Preferences.is.System(preference) ? (
-          <m.div className="background" layoutId="background" />
-        ) : null}
-        <span className="label">System</span>
-      </button>
-      <button
-        aria-pressed={Preferences.is.AlwaysLight(preference)}
-        onClick={() => changeAndStorePreference(Preferences.AlwaysLight())}
-      >
-        {Preferences.is.AlwaysLight(preference) ? (
-          <m.div className="background" layoutId="background" />
-        ) : null}
-        <span className="label">Light</span>
-      </button>
-      <button
-        aria-pressed={Preferences.is.AlwaysDark(preference)}
-        onClick={() => changeAndStorePreference(Preferences.AlwaysDark())}
-      >
-        {Preferences.is.AlwaysDark(preference) ? (
-          <m.div className="background" layoutId="background" />
-        ) : null}
-        <span className="label">Dark</span>
-      </button>
+        {allPreferences.map(({ id, preference, label }) => {
+          const isSelected = Preferences.is[preference.tag](userPreference);
+          return (
+            <button
+              key={id}
+              aria-pressed={isSelected}
+              onClick={() => changeAndStorePreference(preference)}
+            >
+              {isSelected ? (
+                <m.div className="background" layoutId="background" />
+              ) : null}
+              <span className="label">{label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

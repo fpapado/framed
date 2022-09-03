@@ -143,8 +143,19 @@ legend {
 
 .DarkModeSetting {
   --dm-border-radius: 8px;
-  display: flex;
   max-width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.DarkModeSetting .GroupLabel {
+  text-align: center;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.DarkModeSetting-Wrapper {
+  display: flex;
   margin-left: auto;
   margin-right: auto;
   padding: 0.25rem;

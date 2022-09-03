@@ -21,6 +21,7 @@ import { drawImageWithBackground } from "./drawing";
 import { DarkModeSetting, Preference, Preferences } from "./darkMode";
 import { LazyMotion, MotionConfig } from "framer-motion";
 import { usePrefersReducedMotion } from "./animation/usePrefersReducedMotion";
+import { ServiceWorkerUpdatePrompt } from "./ServiceWorkerUpdatePrompt";
 
 const loadFramerMotionFeatures = () =>
   import("./animation/framerFeatures").then((res) => res.default);
@@ -70,9 +71,13 @@ const initialBgColor = "#ffffff";
 
 type Props = {
   initialDarkModePreference?: Preference;
+  waitingServiceWorkerRegistration?: ServiceWorkerRegistration;
 };
 
-function App({ initialDarkModePreference = Preferences.System() }: Props) {
+function App({
+  initialDarkModePreference = Preferences.System(),
+  waitingServiceWorkerRegistration,
+}: Props) {
   // Whether the user prefers reduced motion
   // NOTE: Unlike framer's built-in API, this one updates when the user updates their setting, without needing to reload the app
   // This is useful for long-running sites, or sometimes on Android when the PWA is kept alive
@@ -90,6 +95,13 @@ function App({ initialDarkModePreference = Preferences.System() }: Props) {
         <>
           <main>
             <h1>Framed</h1>
+            <div aria-live="polite" role="status">
+              {waitingServiceWorkerRegistration && (
+                <ServiceWorkerUpdatePrompt
+                  registration={waitingServiceWorkerRegistration}
+                />
+              )}
+            </div>
             <MemoWorkArea />
           </main>
           <footer>

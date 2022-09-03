@@ -80,6 +80,7 @@ self.addEventListener("message", (event) => {
 
 // Any other custom service worker logic can go here.
 
+// Listen for share-target POSTs
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
@@ -96,6 +97,7 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+// Send the share target image to the page, once it's ready to receive it
 export function serveShareTarget(event: FetchEvent): void {
   const dataPromise = event.request.formData();
 

@@ -2,6 +2,20 @@
  * Utilities for communicating with the service worker
  */
 
+/**
+ * Reload once when the new Service Worker starts activating
+ * This is done after `skipWaiting` is called, either automatically or when the user presses the "Update now" button
+ * @see https://redfin.engineering/how-to-fix-the-refresh-button-when-using-service-workers-a8e27af6df68
+ */
+export function setupRefreshOnControllerChange() {
+  let refreshing: boolean;
+  navigator.serviceWorker.addEventListener("controllerchange", function () {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
+
 /** Wait for a shared image */
 export function getSharedImage(): Promise<File> {
   return new Promise((resolve) => {

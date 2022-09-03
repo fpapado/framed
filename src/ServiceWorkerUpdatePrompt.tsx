@@ -47,7 +47,6 @@ export function ServiceWorkerUpdatePrompt() {
 
   console.log("Registration at render", {
     registration,
-    current: registration,
   });
 
   return (
@@ -60,7 +59,7 @@ export function ServiceWorkerUpdatePrompt() {
             <button
               className="primary"
               onClick={() => {
-                registration.waiting?.postMessage("skipWaiting");
+                registration.waiting?.postMessage("SKIP_WAITING");
               }}
             >
               Refresh

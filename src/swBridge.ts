@@ -12,6 +12,7 @@ export function setupRefreshOnControllerChange() {
   navigator.serviceWorker.addEventListener("controllerchange", function () {
     if (refreshing) return;
     refreshing = true;
+    console.log("oncontrollerchange");
     window.location.reload();
   });
 }

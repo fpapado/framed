@@ -19,6 +19,11 @@ import * as swBridge from "./swBridge";
 import { resizeToCanvas } from "./imageResize";
 import { drawImageWithBackground } from "./drawing";
 import { DarkModeSetting, Preference, Preferences } from "./darkMode";
+import { LazyMotion, MotionConfig } from "framer-motion";
+import { usePrefersReducedMotion } from "./animation/usePrefersReducedMotion";
+
+const loadFramerMotionFeatures = () =>
+  import("./animation/framerFeatures").then((res) => res.default);
 
 export const SUPPORTS_SHARE = Boolean(navigator.share);
 
@@ -68,6 +73,46 @@ type Props = {
 };
 
 function App({ initialDarkModePreference = Preferences.System() }: Props) {
+  // Whether the user prefers reduced motion
+  // NOTE: Unlike framer's built-in API, this one updates when the user updates their setting, without needing to reload the app
+  // This is useful for long-running sites, or sometimes on Android when the PWA is kept alive
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  return (
+    // {/* Enable lazy-loading of framer features */}
+    <LazyMotion features={loadFramerMotionFeatures} strict>
+      <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "never"}>
+        <>
+          <main>
+            <h1>Framed</h1>
+            <MemoWorkArea />
+          </main>
+          <footer>
+            <DarkModeSetting initialPreference={initialDarkModePreference} />
+            <p>
+              Made with 🎞️ & 😓 by{" "}
+              <a
+                href="https://fotis.xyz"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Fotis Papadogeorgopoulos
+              </a>
+            </p>
+            <p>
+              You can use this app offline, by installing it via your browser's
+              "Add to Home Screen" functionality.
+            </p>
+          </footer>
+        </>
+      </MotionConfig>
+    </LazyMotion>
+  );
+}
+
+const MemoWorkArea = React.memo(WorkArea);
+
+function WorkArea() {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
   const canvasSrcRef = useRef<HTMLCanvasElement>();
@@ -326,91 +371,73 @@ function App({ initialDarkModePreference = Preferences.System() }: Props) {
   }, [aspectRatio, filename]);
 
   return (
-    <>
-      <main>
-        <h1>Framed</h1>
-        <div className="WorkArea">
-          <form
-            onSubmit={(ev) => {
-              ev.preventDefault();
-            }}
-            className="Controls"
-          >
-            <div>
-              <label htmlFor={ID.bgColorInput}>Background Color</label>
-              <input
-                type="color"
-                id={ID.bgColorInput}
-                name="bgColor"
-                onChange={changeBgColor}
-                value={bgColor}
-              ></input>
-            </div>
-            <div>
-              <fieldset>
-                <legend>Aspect Ratio</legend>
-                <div className="RadioGroup">
-                  {Object.values(ASPECT_RATIOS).map((ar) => {
-                    return (
-                      <div className="Radio" key={ar.id}>
-                        <input
-                          type="radio"
-                          name="aspectRatio"
-                          id={`${ID.aspectRatioInput}-${ar.id}`}
-                          value={ar.id}
-                          onChange={changeAspectRatio}
-                          defaultChecked={aspectRatio.id === ar.id}
-                        />
-                        <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
-                          {ar.label}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </fieldset>
-            </div>
-            <FilePicker onChange={selectFile}>Pick image</FilePicker>
-            <button className="DownloadButton" type="button" onClick={saveFile}>
-              Save
-            </button>
-            {SUPPORTS_SHARE && (
-              <button className="ShareButton" type="button" onClick={shareFile}>
-                Share
-              </button>
-            )}
-          </form>
-          <div className="CanvasArea">
-            <div className="CanvasWrapper">
-              <canvas className="PreviewCanvas" ref={canvasDestRef}></canvas>
-              {/* Consolidated loading indicator on top of the canvas */}
-              {isLoading && <div className="LoadingIndicator">Loading...</div>}
-              {processingState === "error" && (
-                <div className="ErrorIndicator">
-                  <p>
-                    Something went wrong when resizing the image. Please try
-                    again later.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="WorkArea">
+      <form
+        onSubmit={(ev) => {
+          ev.preventDefault();
+        }}
+        className="Controls"
+      >
+        <div>
+          <label htmlFor={ID.bgColorInput}>Background Color</label>
+          <input
+            type="color"
+            id={ID.bgColorInput}
+            name="bgColor"
+            onChange={changeBgColor}
+            value={bgColor}
+          ></input>
         </div>
-      </main>
-      <footer>
-        <DarkModeSetting initialPreference={initialDarkModePreference} />
-        <p>
-          Made with 🎞️ & 😓 by{" "}
-          <a href="https://fotis.xyz" target="_blank" rel="noopener noreferrer">
-            Fotis Papadogeorgopoulos
-          </a>
-        </p>
-        <p>
-          You can use this app offline, by installing it via your browser's "Add
-          to Home Screen" functionality.
-        </p>
-      </footer>
-    </>
+        <div>
+          <fieldset>
+            <legend>Aspect Ratio</legend>
+            <div className="RadioGroup">
+              {Object.values(ASPECT_RATIOS).map((ar) => {
+                return (
+                  <div className="Radio" key={ar.id}>
+                    <input
+                      type="radio"
+                      name="aspectRatio"
+                      id={`${ID.aspectRatioInput}-${ar.id}`}
+                      value={ar.id}
+                      onChange={changeAspectRatio}
+                      defaultChecked={aspectRatio.id === ar.id}
+                    />
+                    <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
+                      {ar.label}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          </fieldset>
+        </div>
+        <FilePicker onChange={selectFile}>Pick image</FilePicker>
+        <button className="DownloadButton" type="button" onClick={saveFile}>
+          Save
+        </button>
+        {SUPPORTS_SHARE && (
+          <button className="ShareButton" type="button" onClick={shareFile}>
+            Share
+          </button>
+        )}
+      </form>
+      <div className="CanvasArea">
+        <div className="CanvasWrapper">
+          <canvas className="PreviewCanvas" ref={canvasDestRef}></canvas>
+          {/* Consolidated loading indicator on top of the canvas */}
+          {isLoading && <div className="LoadingIndicator">Loading...</div>}
+          {processingState === "error" && (
+            <div className="ErrorIndicator">
+              <p>
+                Something went wrong when resizing the image. Please try again
+                later.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

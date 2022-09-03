@@ -78,6 +78,11 @@ function App({ initialDarkModePreference = Preferences.System() }: Props) {
   // This is useful for long-running sites, or sometimes on Android when the PWA is kept alive
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  // Mark data-rendered to the index HTML; used to avoid flashes of content or transitions
+  useEffect(() => {
+    document.documentElement.dataset.rendered = "true";
+  }, []);
+
   return (
     // {/* Enable lazy-loading of framer features */}
     <LazyMotion features={loadFramerMotionFeatures} strict>

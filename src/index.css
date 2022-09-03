@@ -81,7 +81,8 @@ html {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html {
+  /* Enable transition of the background colour, after the inital load */
+  html[data-rendered="true"] {
     transition: background-color 500ms ease-out;
   }
 }

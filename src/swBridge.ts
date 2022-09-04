@@ -9,7 +9,7 @@
  */
 export function setupRefreshOnControllerChange() {
   let refreshing: boolean;
-  navigator.serviceWorker.addEventListener("controllerchange", function () {
+  navigator.serviceWorker?.addEventListener("controllerchange", function () {
     if (refreshing) return;
     refreshing = true;
     console.log("oncontrollerchange");

@@ -59,7 +59,7 @@ export function ServiceWorkerUpdatePrompt() {
             <button
               className="primary"
               onClick={() => {
-                registration.waiting?.postMessage("SKIP_WAITING");
+                registration.waiting?.postMessage({ type: "SKIP_WAITING" });
               }}
             >
               Refresh

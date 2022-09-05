@@ -1,4 +1,11 @@
-import { AspectRatio } from "./App";
+export type AspectRatioId = "1x1" | "4x5" | "9x16";
+
+export type AspectRatio = {
+  id: AspectRatioId;
+  label: string;
+  width: number;
+  height: number;
+};
 
 /**
  * Draw an image with a specified background onto a canvas, fitting to the middle

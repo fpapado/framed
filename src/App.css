@@ -278,3 +278,7 @@ legend {
   color: #111;
   background-color: var(--color-primary-button-accent);
 }
+
+.ShareArea [role="status"] {
+  max-width: 100%;
+}

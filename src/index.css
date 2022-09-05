@@ -168,3 +168,16 @@ label + input {
 form > * + * {
   margin-top: 1rem;
 }
+
+/* Hide content visually, but keep it in the DOM for assistive technologies
+ * @see https://www.a11yproject.com/posts/how-to-hide-content/
+ */
+.visuallyHidden {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}

@@ -2,19 +2,20 @@
  * Utilities for communicating with the service worker
  */
 
+import { Workbox } from "workbox-window";
+
 /**
- * Reload once when the new Service Worker starts activating
+ * Reload when the specified Service Worker takes over the page
  * This is done after `skipWaiting` is called, either automatically or when the user presses the "Update now" button
  * @see https://redfin.engineering/how-to-fix-the-refresh-button-when-using-service-workers-a8e27af6df68
+ * @see https://developer.chrome.com/docs/workbox/migration/migrate-from-v5/#cleaner-offer-a-page-reload-for-users-recipe
  */
-export function setupRefreshOnControllerChange() {
-  let refreshing: boolean;
-  navigator.serviceWorker?.addEventListener("controllerchange", function () {
-    if (refreshing) return;
-    refreshing = true;
-    console.log("oncontrollerchange");
+export function skipWaitingAndReloadWhenControlling(wb: Workbox) {
+  wb.addEventListener("controlling", () => {
     window.location.reload();
   });
+
+  wb.messageSkipWaiting();
 }
 
 /** Wait for a shared image */

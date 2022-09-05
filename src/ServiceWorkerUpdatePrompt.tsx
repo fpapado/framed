@@ -5,37 +5,35 @@ import {
   useEffect,
   useState,
 } from "react";
+import { Workbox } from "workbox-window";
+import { skipWaitingAndReloadWhenControlling } from "./swBridge";
 
-const ServiceWorkerContext = createContext<ServiceWorkerRegistration | null>(
-  null
-);
+const ServiceWorkerContext = createContext<Workbox | null>(null);
 
 type Props = {
-  registrationPromise: Promise<ServiceWorkerRegistration>;
+  workboxPromise: Promise<Workbox>;
 };
 
 /**
  * Add to the root of the app, to provide a valid service worker registration
  */
 export function ServiceWorkerManager({
-  registrationPromise,
+  workboxPromise,
   children,
 }: PropsWithChildren<Props>) {
-  console.log("ServiceWorkerManager", registrationPromise);
-  const [registration, setRegistration] =
-    useState<ServiceWorkerRegistration | null>(null);
+  const [workbox, setWorkbox] = useState<Workbox | null>(null);
 
   // TODO: Find a way that works with multiple registrations, and not only at initial render
   useEffect(() => {
-    registrationPromise
-      .then((reg) => setRegistration(reg))
+    workboxPromise
+      .then((reg) => setWorkbox(reg))
       .catch((err) => {
         console.error(err);
       });
-  }, [registrationPromise]);
+  }, [workboxPromise]);
 
   return (
-    <ServiceWorkerContext.Provider value={registration}>
+    <ServiceWorkerContext.Provider value={workbox}>
       {children}
     </ServiceWorkerContext.Provider>
   );
@@ -43,15 +41,15 @@ export function ServiceWorkerManager({
 
 export function ServiceWorkerUpdatePrompt() {
   const [dismissed, setDismissed] = useState(false);
-  const registration = useContext(ServiceWorkerContext);
+  const workbox = useContext(ServiceWorkerContext);
 
-  console.log("Registration at render", {
-    registration,
+  console.log("Workbox at render", {
+    workbox,
   });
 
   return (
     <div aria-live="polite" role="status">
-      {!dismissed && registration && (
+      {!dismissed && workbox && (
         <div className="ServiceWorkerUpdatePrompt">
           <h2>Update Available!</h2>
           <p>A new version of the app is available. Refresh now?</p>
@@ -59,7 +57,9 @@ export function ServiceWorkerUpdatePrompt() {
             <button
               className="primary"
               onClick={() => {
-                registration.waiting?.postMessage({ type: "SKIP_WAITING" });
+                if (workbox) {
+                  skipWaitingAndReloadWhenControlling(workbox);
+                }
               }}
             >
               Refresh

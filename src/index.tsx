@@ -5,13 +5,9 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
 import { changeHtmlPreference, getPreferenceFromStorage } from "./darkMode";
-import { setupRefreshOnControllerChange } from "./swBridge";
 import { ServiceWorkerManager } from "./ServiceWorkerUpdatePrompt";
 
 function init() {
-  // Set up a listener to refresh the page when the new service worker takes over (this is done on-demand by the user)
-  setupRefreshOnControllerChange();
-
   const initialDarkModePreference = getPreferenceFromStorage();
   changeHtmlPreference(initialDarkModePreference);
 
@@ -22,13 +18,13 @@ function init() {
   root.render(
     <React.StrictMode>
       <ServiceWorkerManager
-        registrationPromise={
+        workboxPromise={
           new Promise((resolve, reject) => {
             serviceWorkerRegistration.register({
               // When the service worker is installed and waiting to take over, prompt the user to update
-              onUpdate: (registration) => {
+              onUpdate: (workbox) => {
                 console.info("Found waiting service worker");
-                resolve(registration);
+                resolve(workbox);
               },
             });
           })

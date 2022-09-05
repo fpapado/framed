@@ -9,6 +9,7 @@
 
 // To learn more about the benefits of this model and instructions on how to
 // opt-in, read https://cra.link/PWA
+import { Workbox } from "workbox-window";
 
 const isLocalhost = Boolean(
   window.location.hostname === "localhost" ||
@@ -21,11 +22,11 @@ const isLocalhost = Boolean(
 );
 
 type Config = {
-  onSuccess?: (registration: ServiceWorkerRegistration) => void;
-  onUpdate?: (registration: ServiceWorkerRegistration) => void;
+  onSuccess?: (wb: Workbox) => void;
+  onUpdate?: (wb: Workbox) => void;
 };
 
-export function register(config?: Config) {
+export function register(config?: Config): Workbox | undefined {
   if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator) {
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
@@ -36,74 +37,57 @@ export function register(config?: Config) {
       return;
     }
 
-    window.addEventListener("load", () => {
-      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
+    // Initialise a workbox-window Workbox client, to handle messaging with the service worker
+    const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
+    const workbox = new Workbox(swUrl);
 
+    window.addEventListener("load", () => {
       if (isLocalhost) {
         // This is running on localhost. Let's check if a service worker still exists or not.
-        checkValidServiceWorker(swUrl, config);
-
-        // Add some additional logging to localhost, pointing developers to the
-        // service worker/PWA documentation.
-        navigator.serviceWorker.ready.then(() => {
-          console.log(
-            "This web app is being served cache-first by a service " +
-              "worker. To learn more, visit https://cra.link/PWA"
-          );
-        });
+        checkValidServiceWorker(workbox, swUrl, config);
       } else {
         // Is not localhost. Just register service worker
-        registerValidSW(swUrl, config);
+        registerValidSW(workbox, config);
       }
     });
+
+    return workbox;
   }
 }
 
-function registerValidSW(swUrl: string, config?: Config) {
-  navigator.serviceWorker
-    .register(swUrl)
-    .then((registration) => {
-      registration.onupdatefound = () => {
-        const installingWorker = registration.installing;
-        if (installingWorker == null) {
-          return;
-        }
-        installingWorker.onstatechange = () => {
-          if (installingWorker.state === "installed") {
-            if (navigator.serviceWorker.controller) {
-              // At this point, the updated precached content has been fetched,
-              // but the previous service worker will still serve the older
-              // content until all client tabs are closed.
-              console.log(
-                "New content is available and will be used when all " +
-                  "tabs for this page are closed. See https://cra.link/PWA."
-              );
+function registerValidSW(workbox: Workbox, config?: Config) {
+  workbox.addEventListener("waiting", (ev) => {
+    // At this point, the updated precached content has been fetched,
+    // but the previous service worker will still serve the older
+    // content until all client tabs are closed.
+    config?.onUpdate?.(workbox);
+  });
 
-              // Execute callback
-              if (config && config.onUpdate) {
-                config.onUpdate(registration);
-              }
-            } else {
-              // At this point, everything has been precached.
-              // It's the perfect time to display a
-              // "Content is cached for offline use." message.
-              console.log("Content is cached for offline use.");
+  workbox.addEventListener("installed", (ev) => {
+    // There was a previous service worker installed already; nothing to do
+    if (navigator.serviceWorker.controller) return;
 
-              // Execute callback
-              if (config && config.onSuccess) {
-                config.onSuccess(registration);
-              }
-            }
-          }
-        };
-      };
-    })
+    // At this point, everything has been precached.
+    // It's the perfect time to display a
+    // "Content is cached for offline use." message.
+    console.log("Content is cached for offline use.");
+
+    config?.onSuccess?.(workbox);
+  });
+
+  workbox
+    .register()
+    .then((registration) => {})
     .catch((error) => {
       console.error("Error during service worker registration:", error);
     });
 }
 
-function checkValidServiceWorker(swUrl: string, config?: Config) {
+function checkValidServiceWorker(
+  workbox: Workbox,
+  swUrl: string,
+  config?: Config
+) {
   // Check if the service worker can be found. If it can't reload the page.
   fetch(swUrl, {
     headers: { "Service-Worker": "script" },
@@ -123,7 +107,7 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
         });
       } else {
         // Service worker found. Proceed as normal.
-        registerValidSW(swUrl, config);
+        registerValidSW(workbox, config);
       }
     })
     .catch(() => {

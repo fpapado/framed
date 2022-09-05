@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { Workbox } from "workbox-window";
@@ -22,8 +23,9 @@ export function ServiceWorkerManager({
   workbox,
   children,
 }: PropsWithChildren<Props>) {
+  const memoWorkbox = useMemo(() => workbox, [workbox]);
   return (
-    <ServiceWorkerContext.Provider value={workbox}>
+    <ServiceWorkerContext.Provider value={memoWorkbox}>
       {children}
     </ServiceWorkerContext.Provider>
   );

@@ -247,8 +247,6 @@ legend {
   margin-right: auto;
   border: 1px solid var(--color-divider);
   border-radius: 2px;
-  /* TODO: Use an accented colour here */
-  background-color: #eee;
   background-color: var(--color-bg-secondary);
 }
 

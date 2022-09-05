@@ -63,9 +63,10 @@ function registerValidSW(workbox: Workbox, config?: Config) {
     config?.onUpdate?.(workbox);
   });
 
-  workbox.addEventListener("installed", (ev) => {
-    // There was a previous service worker installed already; nothing to do
-    if (navigator.serviceWorker.controller) return;
+  workbox.addEventListener("activated", (ev) => {
+    // `event.isUpdate` will be true if another version of the service
+    // worker was controlling the page when this version was registered.
+    if (ev.isUpdate) return;
 
     // At this point, everything has been precached.
     // It's the perfect time to display a

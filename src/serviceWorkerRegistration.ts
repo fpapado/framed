@@ -63,7 +63,7 @@ function registerValidSW(workbox: Workbox, config?: Config) {
     config?.onUpdate?.(workbox);
   });
 
-  workbox.addEventListener("activated", (ev) => {
+  workbox.addEventListener("installed", (ev) => {
     // `event.isUpdate` will be true if another version of the service
     // worker was controlling the page when this version was registered.
     if (ev.isUpdate) return;

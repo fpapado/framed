@@ -6,7 +6,6 @@ import "./App.css";
 
 import { fileOpen, FileWithHandle, fileSave } from "browser-fs-access";
 import React, {
-  useTransition,
   useCallback,
   useId,
   useRef,
@@ -148,16 +147,12 @@ function WorkArea() {
     aspectRatioInput: `${id}-aspectRatio`,
   };
 
-  // Transitions for things that affect the image parameters synchronously
-  // These can keep the UI more responsive under load
-  const [isDrawTransitionPending, startDrawTransition] = useTransition();
-
   // Processing state for async operations
   const [processingState, setProcessingState] =
     useState<ProcessingState>("inert");
 
   // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
-  const isLoading = processingState === "processing" || isDrawTransitionPending;
+  const isLoading = processingState === "processing";
 
   const updateCanvas = useCallback(
     async ({
@@ -276,13 +271,11 @@ function WorkArea() {
 
   const changeBgColor = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
-      startDrawTransition(() => {
-        const newColor = ev.target.value;
-        setBgColor(newColor);
-        updateCanvas({
-          aspectRatio,
-          bgColor: newColor,
-        });
+      const newColor = ev.target.value;
+      setBgColor(newColor);
+      updateCanvas({
+        aspectRatio,
+        bgColor: newColor,
       });
     },
     [aspectRatio, updateCanvas]

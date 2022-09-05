@@ -27,6 +27,13 @@ input[type="color"] {
   min-height: 44px;
   font-weight: 600;
   width: 100%;
+  transition: background-color 400ms ease-out;
+}
+
+.FilePicker:hover,
+.ShareButton:hover,
+.DownloadButton:hover {
+  background-color: var(--color-bg-secondary);
 }
 
 .CanvasArea {
@@ -180,8 +187,13 @@ legend {
   font-weight: 600;
   color: var(--color-darkmode-fg);
   background-color: var(--color-darkmode-bg);
+  transition: background-color 400ms ease-out;
   /* Dark mode button taps already have feedback in the form of animation or background transition, and this seems jarring */
   -webkit-tap-highlight-color: transparent;
+}
+
+.DarkModeSetting button:not([aria-pressed="true"]):hover {
+  background-color: var(--color-darkmode-bg-hover);
 }
 
 .DarkModeSetting .background {

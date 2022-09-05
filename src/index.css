@@ -32,6 +32,7 @@
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   --color-darkmode-fg: #111;
   --color-darkmode-bg: #eee;
+  --color-darkmode-bg-hover: #ccc;
   --color-darkmode-accent: #a295f1;
   --color-primary-button-accent: #a295f1;
 }
@@ -154,7 +155,6 @@ fieldset {
 
 button {
   background-color: #fff;
-  cursor: pointer;
 }
 
 label {

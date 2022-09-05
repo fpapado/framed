@@ -15,21 +15,11 @@ function init() {
     document.getElementById("root") as HTMLElement
   );
 
+  const workbox = serviceWorkerRegistration.register();
+
   root.render(
     <React.StrictMode>
-      <ServiceWorkerManager
-        workboxPromise={
-          new Promise((resolve, reject) => {
-            serviceWorkerRegistration.register({
-              // When the service worker is installed and waiting to take over, prompt the user to update
-              onUpdate: (workbox) => {
-                console.info("Found waiting service worker");
-                resolve(workbox);
-              },
-            });
-          })
-        }
-      >
+      <ServiceWorkerManager workbox={workbox}>
         <App initialDarkModePreference={initialDarkModePreference} />
       </ServiceWorkerManager>
     </React.StrictMode>

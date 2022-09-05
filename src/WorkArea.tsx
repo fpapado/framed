@@ -1,12 +1,5 @@
 import { FileWithHandle, fileSave } from "browser-fs-access";
-import {
-  useRef,
-  useState,
-  useId,
-  useCallback,
-  useEffect,
-  Fragment,
-} from "react";
+import { useRef, useState, useId, useCallback, useEffect } from "react";
 
 import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
 import { FilePicker } from "./FilePicker";

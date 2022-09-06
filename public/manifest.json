@@ -5,6 +5,7 @@
   "lang": "en",
   "categories": ["photo", "productivity", "utilities"],
   "start_url": ".",
+  "id": "/",
   "display": "standalone",
   "theme_color": "#fffff1",
   "background_color": "#fffff1",

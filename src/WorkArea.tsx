@@ -1,4 +1,7 @@
-import { Share1Icon, Share2Icon } from "@radix-ui/react-icons";
+import {
+  Share1Icon as AndroidStyleShareIcon,
+  Share2Icon as AppleStyleShareIcon,
+} from "@radix-ui/react-icons";
 import { FileWithHandle, fileSave } from "browser-fs-access";
 import { useRef, useState, useId, useCallback, useEffect } from "react";
 
@@ -443,12 +446,25 @@ function makeOutputFilename({
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/platform
  */
 function PlatformShareIcon() {
+  // Try to use User Agent client hints first, to detect Apple devices
+  // @see https://developer.mozilla.org/en-US/docs/Web/API/NavigatorUAData
+  const navigatorUAPlatform = navigator.userAgentData?.platform;
+  if (
+    navigatorUAPlatform === "macOS" ||
+    navigatorUAPlatform === "iPhone" ||
+    navigatorUAPlatform === "iPadOS"
+  ) {
+    return <AppleStyleShareIcon aria-hidden="true" />;
+  }
+
+  // If that didn't work, sniff navigator.platform
   if (
     navigator.platform.indexOf("Mac") === 0 ||
     navigator.platform === "iPhone"
   ) {
-    return <Share2Icon aria-hidden="true" />;
+    return <AppleStyleShareIcon aria-hidden="true" />;
   }
 
-  return <Share1Icon aria-hidden="true" />;
+  // Last case, use the Android-style share icon
+  return <AndroidStyleShareIcon aria-hidden="true" />;
 }

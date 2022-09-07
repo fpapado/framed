@@ -51,6 +51,7 @@
   },
   "devDependencies": {
     "@types/pica": "^9.0.1",
-    "patch-package": "^6.4.7"
+    "patch-package": "^6.4.7",
+    "user-agent-data-types": "^0.3.0"
   }
 }

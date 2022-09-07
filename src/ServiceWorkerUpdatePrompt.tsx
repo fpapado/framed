@@ -58,10 +58,6 @@ export function ServiceWorkerUpdatePrompt() {
     };
   }, [workbox]);
 
-  console.log("Workbox at render", {
-    workbox,
-  });
-
   return (
     <div aria-live="polite" role="status">
       {shown && (

@@ -410,8 +410,8 @@ function ShareArea({
           "Shared!"
         ) : (
           <>
-            <span>Share</span>
             <PlatformShareIcon />
+            <span>Share</span>
           </>
         )}
       </button>

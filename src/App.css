@@ -73,7 +73,7 @@ h1 {
   color: var(--color-fg);
   min-width: 44px;
   min-height: 44px;
-  font-weight: 600;
+  font-weight: 400;
   width: 100%;
   transition: background-color 400ms ease-out;
 }
@@ -335,5 +335,10 @@ legend {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1ch;
+  gap: 0.5em;
+}
+
+.ShareButton svg {
+  width: 1em;
+  height: 1em;
 }

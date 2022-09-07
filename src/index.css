@@ -84,6 +84,8 @@ html {
   color: var(--color-fg);
   font-size: 1rem;
   accent-color: var(--color-accent);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @media (prefers-reduced-motion: no-preference) {

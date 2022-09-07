@@ -154,6 +154,7 @@ fieldset {
 }
 
 button {
+  margin: 0;
   background-color: #fff;
 }
 

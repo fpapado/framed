@@ -282,3 +282,10 @@ legend {
 .ShareArea [role="status"] {
   max-width: 100%;
 }
+
+.ShareButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1ch;
+}

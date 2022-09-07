@@ -1,3 +1,4 @@
+import { Share1Icon, Share2Icon } from "@radix-ui/react-icons";
 import { FileWithHandle, fileSave } from "browser-fs-access";
 import { useRef, useState, useId, useCallback, useEffect } from "react";
 
@@ -400,11 +401,16 @@ function ShareArea({
   return (
     <div className="ShareArea">
       <button className="ShareButton" type="button" onClick={shareFile}>
-        {shareState === "sharing"
-          ? "Sharing..."
-          : shareState === "success"
-          ? "Shared!"
-          : "Share"}
+        {shareState === "sharing" ? (
+          "Sharing..."
+        ) : shareState === "success" ? (
+          "Shared!"
+        ) : (
+          <>
+            <span>Share</span>
+            <PlatformShareIcon />
+          </>
+        )}
       </button>
       <div role="status" aria-live="polite">
         {/* The error state is visible */}
@@ -429,4 +435,20 @@ function makeOutputFilename({
   originalName?: string;
 }) {
   return `framed-${aspectRatio.id}-${originalName ? originalName : "canvas"}`;
+}
+
+/**
+ * A share icon based on whether we are on Mac/iPhone or other platforms
+ * This is imperfect, but close enough
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/platform
+ */
+function PlatformShareIcon() {
+  if (
+    navigator.platform.indexOf("Mac") === 0 ||
+    navigator.platform === "iPhone"
+  ) {
+    return <Share2Icon aria-hidden="true" />;
+  }
+
+  return <Share1Icon aria-hidden="true" />;
 }

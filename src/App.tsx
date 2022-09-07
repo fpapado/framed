@@ -39,7 +39,10 @@ function App({ initialDarkModePreference = Preferences.System() }: Props) {
       <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "never"}>
         <>
           <main>
-            <h1>Framed</h1>
+            <h1>
+              <div className="logo"></div>
+              Framed
+            </h1>
             <ServiceWorkerUpdatePrompt />
             <MemoWorkArea />
           </main>

@@ -1,3 +1,4 @@
+import { m, AnimatePresence } from "framer-motion";
 import {
   createContext,
   PropsWithChildren,
@@ -58,22 +59,40 @@ export function ServiceWorkerUpdatePrompt() {
     };
   }, [workbox]);
 
+  useEffect(() => {
+    setTimeout(() => {
+      setShown(true);
+    }, 1000);
+  }, []);
+
   return (
     <div aria-live="polite" role="status">
-      {shown && (
-        <div className="ServiceWorkerUpdatePrompt">
-          <h2>Update Available!</h2>
-          <p>A new version of the app is available. Refresh now?</p>
-          <div className="Actions">
-            <button className="primary" onClick={refresh}>
-              Refresh
-            </button>
-            <button className="secondary" onClick={dismiss}>
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {shown && (
+          <m.div
+            className="ServiceWorkerUpdatePrompt"
+            key="prompt"
+            // initial={{ x: "calc(-100% - 1rem)" }}
+            // animate={{ x: 0 }}
+            // exit={{ x: "calc(100% + 1rem)" }}
+            // transition={{ duration: 2 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <h2>Update Available!</h2>
+            <p>A new version of the app is available. Refresh now?</p>
+            <div className="Actions">
+              <button className="primary" onClick={refresh}>
+                Refresh
+              </button>
+              <button className="secondary" onClick={dismiss}>
+                Dismiss
+              </button>
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

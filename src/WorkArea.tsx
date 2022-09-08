@@ -362,40 +362,42 @@ function ShareArea({
   const shareFile = useCallback(async () => {
     const file = await getFileToShare();
 
-    if (
-      SUPPORTS_SHARE &&
-      navigator.canShare &&
-      navigator.canShare({ files: [file] })
-    ) {
-      setShareState("sharing");
-      navigator
-        .share({
-          files: [file],
-        })
-        .then(() => {
-          setShareState("success");
-
-          // Give 5 seconds before resetting the state to inert
-          setTimeout(() => {
-            setShareState("inert");
-          }, 5000);
-        })
-        .catch((err) => {
-          // The user aborted picking a file; no need to report this
-          if (err instanceof Error && err.name === "AbortError") {
-            setShareState("inert");
-            return;
-          }
-          setShareState("error");
-          console.error("Error when sharing: ", err);
-
-          setTimeout(() => {
-            setShareState("inert");
-          }, 5000);
-        });
-    } else {
+    // There is an edge case on Safari on iPhone SE (only?), where SUPPORTS_SHARE is true, but the system cannot share files
+    // It would be preferable to not show the button at all, in this case
+    // TODO: Create a canary/test file, that we can use to check whether the browser supports sharing
+    if (SUPPORTS_SHARE && !navigator.canShare({ files: [file] })) {
       console.error("System does not support sharing files");
+      setShareState("error");
+      return;
     }
+
+    setShareState("sharing");
+
+    navigator
+      .share({
+        files: [file],
+      })
+      .then(() => {
+        setShareState("success");
+
+        // Give 5 seconds before resetting the state to inert
+        setTimeout(() => {
+          setShareState("inert");
+        }, 5000);
+      })
+      .catch((err) => {
+        // The user aborted picking a file; no need to report this
+        if (err instanceof Error && err.name === "AbortError") {
+          setShareState("inert");
+          return;
+        }
+        setShareState("error");
+        console.error("Error when sharing: ", err);
+
+        setTimeout(() => {
+          setShareState("inert");
+        }, 5000);
+      });
   }, [getFileToShare]);
 
   if (!SUPPORTS_SHARE) {

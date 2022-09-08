@@ -59,12 +59,6 @@ export function ServiceWorkerUpdatePrompt() {
     };
   }, [workbox]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setShown(true);
-    }, 1000);
-  }, []);
-
   return (
     <div aria-live="polite" role="status">
       <AnimatePresence>

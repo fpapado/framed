@@ -3,12 +3,20 @@ import {
   Share2Icon as AppleStyleShareIcon,
 } from "@radix-ui/react-icons";
 import { FileWithHandle, fileSave } from "browser-fs-access";
-import { useRef, useState, useId, useCallback, useEffect } from "react";
+import {
+  useRef,
+  useState,
+  useId,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 
 import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
 import { FilePicker } from "./FilePicker";
 import { resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./swBridge";
+import { getCanaryJpegShareFile } from "./utils/canaryShareFile";
 
 export const SUPPORTS_SHARE = Boolean(navigator.share);
 
@@ -359,14 +367,17 @@ function ShareArea({
 }) {
   const [shareState, setShareState] = useState<SharingState>("inert");
 
+  const canaryShareFile = useMemo(() => getCanaryJpegShareFile(), []);
+
   const shareFile = useCallback(async () => {
     const file = await getFileToShare();
 
-    // There is an edge case on Safari on iPhone SE (only?), where SUPPORTS_SHARE is true, but the system cannot share files
-    // It would be preferable to not show the button at all, in this case
-    // TODO: Create a canary/test file, that we can use to check whether the browser supports sharing
+    // It is possible that we support sharing the canary file, but not the final file itself
+    // Unlikely, but possible; let's create an error for the user, just in case
     if (SUPPORTS_SHARE && !navigator.canShare({ files: [file] })) {
-      console.error("System does not support sharing files");
+      console.error(
+        "System does not support sharing files, or this type of file"
+      );
       setShareState("error");
       return;
     }
@@ -400,9 +411,10 @@ function ShareArea({
       });
   }, [getFileToShare]);
 
-  if (!SUPPORTS_SHARE) {
+  if (!SUPPORTS_SHARE || !navigator.canShare({ files: [canaryShareFile] })) {
     return null;
   }
+
   return (
     <div className="ShareArea">
       <button className="ShareButton" type="button" onClick={shareFile}>

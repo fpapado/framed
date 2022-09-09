@@ -8,6 +8,20 @@
  * This issue of needing to have a valid/canary share file up-front has been raised with implementers
  * @see https://github.com/w3c/web-share/issues/108
  */
+export function getCanaryEmptyShareFile() {
+  return new File([], "framed-share-canary-file");
+}
+
+/**
+ * Canary share file to pass to Navigator.canShare({files: [file]});
+ * this allows detection up-front, to avoid showing share UI elements altogether.
+ *
+ * This was motivated by an edge case on Safari on iPhone SE, where SUPPORTS_SHARE was true, but the system could not share files.
+ * It would be preferable to not show the button at all, in that case.
+ *
+ * This issue of needing to have a valid/canary share file up-front has been raised with implementers
+ * @see https://github.com/w3c/web-share/issues/108
+ */
 export function getCanaryJpegShareFile() {
   const mimeType = "image/jpeg";
   // The screenshot of the app, resized to 15x32 with Squoosh, and passed through a JPEG->Base64 conversion
@@ -18,7 +32,7 @@ export function getCanaryJpegShareFile() {
   const asUint8 = base64DecToArr(asBase64);
   const asBlob = new Blob([asUint8], { type: mimeType });
 
-  return new File([asBlob], "framed-share-canary", { type: mimeType });
+  return new File([asBlob], "framed-share-canary-jpeg", { type: mimeType });
 }
 
 // Convert base64 to Uint8

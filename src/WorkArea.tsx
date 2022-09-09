@@ -16,7 +16,7 @@ import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
 import { FilePicker } from "./FilePicker";
 import { resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./swBridge";
-import { getCanaryJpegShareFile } from "./utils/canaryShareFile";
+import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
 
 export const SUPPORTS_SHARE = Boolean(navigator.share);
 
@@ -367,7 +367,7 @@ function ShareArea({
 }) {
   const [shareState, setShareState] = useState<SharingState>("inert");
 
-  const canaryShareFile = useMemo(() => getCanaryJpegShareFile(), []);
+  const canaryShareFile = useMemo(() => getCanaryEmptyShareFile(), []);
 
   const shareFile = useCallback(async () => {
     const file = await getFileToShare();

@@ -11,6 +11,7 @@ import React, {
   lazy,
   PropsWithChildren,
 } from "react";
+import { m } from "framer-motion";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
@@ -519,18 +520,33 @@ function PlatformShareIcon() {
   return <AndroidStyleShareIcon aria-hidden="true" />;
 }
 
+const variants = {
+  open: {
+    opacity: 1,
+  },
+  closed: {
+    opacity: 0,
+  },
+};
+
 function ExpandableArea({
   label,
   children,
 }: PropsWithChildren<{ label: string }>) {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <div className="ExpandableArea">
-      <button onClick={() => setOpen(!open)} aria-expanded={open}>
+      <button onClick={() => setIsOpen(!isOpen)} aria-expanded={isOpen}>
         <ArrowDown />
         {label}
       </button>
-      <div hidden={!open}>{children}</div>
+      <m.div
+        hidden={!isOpen}
+        animate={isOpen ? "open" : "closed"}
+        variants={variants}
+      >
+        {children}
+      </m.div>
     </div>
   );
 }

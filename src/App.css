@@ -80,7 +80,8 @@ h1 {
 
 .FilePicker:hover,
 .ShareButton:hover,
-.DownloadButton:hover {
+.DownloadButton:hover,
+.ExpandableArea button:hover {
   background-color: var(--color-bg-secondary);
 }
 
@@ -341,4 +342,49 @@ legend {
 .ShareButton svg {
   width: 1em;
   height: 1em;
+}
+
+.ExpandableArea {
+  margin-top: 0.5rem;
+}
+
+.ExpandableArea button {
+  display: flex;
+  max-width: 28rem;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5em;
+  border: 1px solid var(--color-divider);
+  border-radius: 2px;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  min-width: 44px;
+  min-height: 44px;
+  font-weight: 400;
+  width: 100%;
+  transition: background-color 400ms ease-out;
+}
+
+.ExpandableArea button svg {
+  transition: transform 200ms ease-out;
+}
+
+.ExpandableArea button[aria-expanded="true"] svg {
+  transform: rotateZ(180deg);
+}
+
+.CustomColorPicker {
+  /* Override the width of sliders */
+  --spectrum-colorslider-default-length: 100%;
+  /* Set a maximum width for the picker itself; the value is arbitrary, based on eyeballing it. */
+  max-width: 28rem;
+  background: none !important;
+  font: inherit !important;
+}
+
+.CustomColorPicker-Wrapper {
+  display: flex;
+  margin-top: 0.5rem;
+  flex-direction: column;
+  gap: 0.5rem;
 }

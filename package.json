@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@adobe/react-spectrum": "^3.21.2",
     "@imagemagick/magick-wasm": "^0.0.14",
+    "@react-spectrum/color": "^3.0.0-beta.15",
+    "@react-stately/color": "^3.1.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
@@ -17,6 +20,7 @@
     "pica": "^9.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^3.1.4",
     "react-scripts": "5.0.1",
     "typescript": "^4.8.2",
     "unionize": "^3.1.0",

@@ -1,20 +1,30 @@
+import { Color, parseColor } from "@react-stately/color";
 import { FileWithHandle, fileSave } from "browser-fs-access";
-import {
+import React, {
   useRef,
   useState,
   useId,
   useCallback,
   useEffect,
   useMemo,
+  Suspense,
+  lazy,
+  PropsWithChildren,
 } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
 import { FilePicker } from "./FilePicker";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
+import { ArrowDown } from "./icons/ArrowDown";
 import { resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
+
+const LazyCustomColorPicker = lazy(() =>
+  import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
+);
 
 export const SUPPORTS_SHARE = Boolean(navigator.share);
 
@@ -50,7 +60,7 @@ type ProcessingState = "inert" | "processing" | "error";
 type SharingState = "inert" | "sharing" | "error" | "success";
 
 const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
-const initialBgColor = "#ffffff";
+const initialBgColor = parseColor("hsb(0, 0%, 100%)");
 
 export function WorkArea() {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
@@ -69,6 +79,9 @@ export function WorkArea() {
 
   // State/options based on user selections
   const [bgColor, setBgColor] = useState(initialBgColor);
+
+  const bgColorHex = useMemo(() => bgColor.toString("hex"), [bgColor]);
+
   // TODO: This could be a ref, since it doesn't affect rendering per se
   const [filename, setFilename] = useState<string>();
   const [aspectRatio, setAspectRatio] =
@@ -96,7 +109,7 @@ export function WorkArea() {
     }: {
       blob?: Blob;
       aspectRatio: AspectRatio;
-      bgColor: string;
+      bgColor: Color;
     }) => {
       try {
         setProcessingState("processing");
@@ -125,7 +138,7 @@ export function WorkArea() {
           canvasSrc: canvasSrcRef.current,
           canvasDest: canvasDestRef.current,
           aspectRatio,
-          bgColor,
+          bgColor: bgColor.toString("hex"),
         });
 
         setProcessingState("inert");
@@ -167,7 +180,7 @@ export function WorkArea() {
       await updateCanvas({
         blob: file,
         aspectRatio: initialAspectRatio,
-        bgColor: initialBgColor,
+        bgColor: parseColor(initialBgColor.toString("hex")),
       });
     }
 
@@ -194,7 +207,7 @@ export function WorkArea() {
     canvasDest.height = initialAspectRatio.height;
 
     // Then, draw background
-    canvasDestCtx.fillStyle = initialBgColor;
+    canvasDestCtx.fillStyle = initialBgColor.toString("hex");
     canvasDestCtx.fillRect(
       0,
       0,
@@ -204,8 +217,7 @@ export function WorkArea() {
   }, []);
 
   const changeBgColor = useCallback(
-    (ev: React.ChangeEvent<HTMLInputElement>) => {
-      const newColor = ev.target.value;
+    (newColor: Color) => {
       setBgColor(newColor);
       updateCanvas({
         aspectRatio,
@@ -213,6 +225,18 @@ export function WorkArea() {
       });
     },
     [aspectRatio, updateCanvas]
+  );
+
+  const changeBgColorFromString = useCallback(
+    (ev: React.ChangeEvent<HTMLInputElement>) => {
+      try {
+        const newColor = parseColor(ev.target.value).toFormat("hsb");
+        changeBgColor(newColor);
+      } catch (err) {
+        // Ignore parse errors, but don't set the colour
+      }
+    },
+    [changeBgColor]
   );
 
   const changeAspectRatio = useCallback(
@@ -305,9 +329,23 @@ export function WorkArea() {
             type="color"
             id={ID.bgColorInput}
             name="bgColor"
-            onChange={changeBgColor}
-            value={bgColor}
+            onChange={changeBgColorFromString}
+            value={bgColorHex}
           ></input>
+          <ExpandableArea label="Custom colors">
+            <ErrorBoundary
+              fallbackRender={() => (
+                <p>Something went wrong when displaying the color picker.</p>
+              )}
+            >
+              <Suspense>
+                <LazyCustomColorPicker
+                  color={bgColor}
+                  onChange={changeBgColor}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </ExpandableArea>
         </div>
         <div>
           <fieldset>
@@ -479,4 +517,20 @@ function PlatformShareIcon() {
 
   // Last case, use the Android-style share icon
   return <AndroidStyleShareIcon aria-hidden="true" />;
+}
+
+function ExpandableArea({
+  label,
+  children,
+}: PropsWithChildren<{ label: string }>) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ExpandableArea">
+      <button onClick={() => setOpen(!open)} aria-expanded={open}>
+        <ArrowDown />
+        {label}
+      </button>
+      <div hidden={!open}>{children}</div>
+    </div>
+  );
 }

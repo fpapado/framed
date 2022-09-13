@@ -34,7 +34,6 @@ function App({ initialDarkModePreference = Preferences.System() }: Props) {
   }, []);
 
   return (
-    // {/* Enable lazy-loading of framer features */}
     <LazyMotion features={loadFramerMotionFeatures} strict>
       <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "never"}>
         <>

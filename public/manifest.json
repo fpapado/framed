@@ -7,7 +7,7 @@
   "start_url": ".",
   "id": "/",
   "display": "standalone",
-  "theme_color": "#fffff1",
+  "theme_color": "#111111",
   "background_color": "#fffff1",
   "share_target": {
     "action": "/?share-target",
@@ -30,7 +30,13 @@
       "src": "logo512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "logo512-maskable.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [

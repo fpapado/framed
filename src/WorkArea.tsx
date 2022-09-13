@@ -1,7 +1,3 @@
-import {
-  Share1Icon as AndroidStyleShareIcon,
-  Share2Icon as AppleStyleShareIcon,
-} from "@radix-ui/react-icons";
 import { FileWithHandle, fileSave } from "browser-fs-access";
 import {
   useRef,
@@ -14,6 +10,8 @@ import {
 
 import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
 import { FilePicker } from "./FilePicker";
+import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
+import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";

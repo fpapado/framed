@@ -20,6 +20,9 @@ import { ColorSchemePicker } from "./colorScheme/ColorSchemePicker";
 const loadFramerMotionFeatures = () =>
   import("./animation/framerFeatures").then((res) => res.default);
 
+const MemoAppInner = React.memo(AppInner);
+const MemoWorkArea = React.memo(WorkArea);
+
 type Props = {
   initialColorScheme?: Preference;
 };
@@ -39,39 +42,39 @@ function App({ initialColorScheme = Preferences.System() }: Props) {
     <ColorSchemeProvider initialPreference={initialColorScheme}>
       <LazyMotion features={loadFramerMotionFeatures} strict>
         <MotionConfig reducedMotion={prefersReducedMotion ? "always" : "never"}>
-          <>
-            <main>
-              <h1>
-                <div className="logo"></div>
-                Framed
-              </h1>
-              <ServiceWorkerUpdatePrompt />
-              <MemoWorkArea />
-            </main>
-            <footer>
-              <ColorSchemePicker />
-              <p>
-                Made with 🎞️ & 😓 by{" "}
-                <a
-                  href="https://fotis.xyz"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Fotis Papadogeorgopoulos
-                </a>
-              </p>
-              <p>
-                You can use this app offline, by installing it via your
-                browser's "Add to Home Screen" functionality.
-              </p>
-            </footer>
-          </>
+          <MemoAppInner />
         </MotionConfig>
       </LazyMotion>
     </ColorSchemeProvider>
   );
 }
 
-const MemoWorkArea = React.memo(WorkArea);
+function AppInner() {
+  return (
+    <>
+      <main>
+        <h1>
+          <div className="logo"></div>
+          Framed
+        </h1>
+        <ServiceWorkerUpdatePrompt />
+        <MemoWorkArea />
+      </main>
+      <footer>
+        <ColorSchemePicker />
+        <p>
+          Made with 🎞️ & 😓 by{" "}
+          <a href="https://fotis.xyz" target="_blank" rel="noopener noreferrer">
+            Fotis Papadogeorgopoulos
+          </a>
+        </p>
+        <p>
+          You can use this app offline, by installing it via your browser's "Add
+          to Home Screen" functionality.
+        </p>
+      </footer>
+    </>
+  );
+}
 
 export default App;

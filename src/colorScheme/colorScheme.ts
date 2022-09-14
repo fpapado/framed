@@ -46,7 +46,33 @@ export function storePreference(pref: Preference) {
 }
 
 export function changeHtmlPreference(pref: Preference) {
+  // To reflect the theme preference in HTML, we do two things:
+  //  1) Add data-theme too the root, which our styles hook into
+  //  2) Remove the specific theme-color meta tags, and add only the one for the theme
   document.documentElement.dataset.theme = preferenceToString(pref);
+
+  document.head
+    .querySelectorAll('meta[name="theme-color"]')
+    .forEach((el) => el.remove());
+
+  const newMeta = Preferences.match(pref, {
+    System: () => [
+      { content: "#fffff1", media: "(prefers-color-scheme: light)" },
+      { content: "#111111", media: "(prefers-color-scheme: dark)" },
+    ],
+    AlwaysLight: () => [{ content: "#fffff1" }],
+    AlwaysDark: () => [{ content: "#111111" }],
+  }) as { content: string; media?: string }[];
+
+  newMeta.forEach(({ content, media }) => {
+    const el = document.createElement("meta");
+    el.name = "theme-color";
+    el.content = content;
+    if (!!media) {
+      el.media = media;
+    }
+    document.head.append(el);
+  });
 }
 
 export const allPreferences = [

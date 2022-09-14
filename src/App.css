@@ -67,6 +67,7 @@ h1 {
 .ShareButton,
 .DownloadButton {
   display: block;
+  font-size: 1rem;
   border: 1px solid var(--color-divider);
   border-radius: 2px;
   background-color: var(--color-bg);

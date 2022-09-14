@@ -4,12 +4,16 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
-import { changeHtmlPreference, getPreferenceFromStorage } from "./darkMode";
+import {
+  changeHtmlPreference,
+  getPreferenceFromStorage,
+} from "./colorScheme/colorScheme";
 import { ServiceWorkerManager } from "./ServiceWorkerUpdatePrompt";
 
 function init() {
-  const initialDarkModePreference = getPreferenceFromStorage();
-  changeHtmlPreference(initialDarkModePreference);
+  // Initialise color scheme, if user has selected one
+  const initialColorScheme = getPreferenceFromStorage();
+  changeHtmlPreference(initialColorScheme);
 
   const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
@@ -20,7 +24,7 @@ function init() {
   root.render(
     <React.StrictMode>
       <ServiceWorkerManager workbox={workbox}>
-        <App initialDarkModePreference={initialDarkModePreference} />
+        <App initialColorScheme={initialColorScheme} />
       </ServiceWorkerManager>
     </React.StrictMode>
   );

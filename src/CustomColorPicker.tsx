@@ -6,6 +6,8 @@ import {
   Provider as SpectrumProvider,
 } from "@adobe/react-spectrum";
 import { useMemo } from "react";
+import { useColorSchemeContext } from "./colorScheme/ColorSchemeProvider";
+import { Preferences } from "./colorScheme/colorScheme";
 
 /**
  * A custom color picker component, represented as three sliders, one for each HSL (Hue, Saturation, Lightness) values.
@@ -31,6 +33,10 @@ export function CustomColorPicker({
   color: Color;
   onChange: (color: Color) => void;
 }) {
+  // React-spectrum relies on knowing the color scheme to set the foreground colour.
+  // Because we have an in-app setting, we must inform it of the changes.
+  const [colorScheme] = useColorSchemeContext();
+
   /* Convert the color to the correct format, expected by the sliders
    * The sliders throw if the Color is in a format that we do not expect, e.g. if hex or hsl is provided, when we want hsb.
    * There is no way to guard against this with the current types (without a wrapper), and the component will throw as a whole, if that happens.
@@ -45,7 +51,15 @@ export function CustomColorPicker({
     [color]
   );
   return (
-    <SpectrumProvider theme={defaultTheme} UNSAFE_className="CustomColorPicker">
+    <SpectrumProvider
+      colorScheme={Preferences.match(colorScheme, {
+        AlwaysDark: () => "dark",
+        AlwaysLight: () => "light",
+        System: () => undefined,
+      })}
+      theme={defaultTheme}
+      UNSAFE_className="CustomColorPicker"
+    >
       <div className="CustomColorPicker-Wrapper">
         <ColorSlider channel="hue" value={asFormat} onChange={onChange} />
         <ColorSlider

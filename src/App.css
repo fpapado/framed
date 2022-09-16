@@ -88,11 +88,20 @@ h1 {
 
 .CanvasArea {
   margin-top: 1rem;
-  grid-area: preview;
+  grid-area: canvasArea;
 }
 
-.Controls {
-  grid-area: controls;
+.Controls > * + * {
+  margin-top: 1rem;
+}
+
+/* TODO: Fix issue where top controls are split equally with bottom */
+.TopControls {
+  grid-area: topControls;
+}
+
+.BottomControls {
+  grid-area: bottomControls;
 }
 
 .PreviewCanvas {
@@ -184,18 +193,34 @@ legend {
   min-height: 44px;
 }
 
+.BottomControls {
+  /* Space the bottom controls from the canvas and footer */
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
 @media screen and (min-width: 64rem) {
   /* Reset canvas area top margin from narrow screen view */
   .CanvasArea {
     margin-top: 0;
   }
 
+  .BottomControls {
+    margin: 0;
+  }
+
   .WorkArea {
     display: grid;
-    grid-template-areas: "preview controls";
+    /* The ___ blank area is important to allow the canvas to stretch, 
+     *  while the controls stay alignted to the start without stretching.
+     */
+    grid-template-areas:
+      "canvasArea topControls"
+      "canvasArea bottomControls"
+      "canvasArea blank";
     grid-template-columns: 28rem minmax(12rem, 22rem);
     justify-content: center;
-    gap: 2rem;
+    column-gap: 2rem;
   }
 }
 

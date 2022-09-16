@@ -420,36 +420,7 @@ export function WorkArea() {
 
   return (
     <div className="WorkArea">
-      <form
-        onSubmit={(ev) => {
-          ev.preventDefault();
-        }}
-        className="Controls"
-      >
-        <div>
-          <label htmlFor={ID.bgColorInput}>Background Color</label>
-          <input
-            type="color"
-            id={ID.bgColorInput}
-            name="bgColor"
-            onChange={changeBgColorFromString}
-            value={bgColorHex}
-          ></input>
-          <ExpandableArea label="Custom colors">
-            <ErrorBoundary
-              fallbackRender={() => (
-                <p>Something went wrong when displaying the color picker.</p>
-              )}
-            >
-              <Suspense>
-                <LazyCustomColorPicker
-                  color={bgColor}
-                  onChange={changeBgColor}
-                />
-              </Suspense>
-            </ErrorBoundary>
-          </ExpandableArea>
-        </div>
+      <div className="Controls TopControls">
         <div>
           <fieldset>
             <legend>Aspect Ratio</legend>
@@ -484,11 +455,7 @@ export function WorkArea() {
         <p id={ID.filePickerDescription}>
           Selecting multiple files will insert the first two as a diptych.
         </p>
-        <button className="DownloadButton" type="button" onClick={saveFile}>
-          Save
-        </button>
-        <ShareArea getFileToShare={getFileToShare} />
-      </form>
+      </div>
       <div className="CanvasArea">
         <div className="CanvasWrapper">
           <canvas className="PreviewCanvas" ref={canvasDestRef}></canvas>
@@ -503,6 +470,36 @@ export function WorkArea() {
             </div>
           )}
         </div>
+      </div>
+      <div className="Controls BottomControls">
+        <div>
+          <label htmlFor={ID.bgColorInput}>Background Color</label>
+          <input
+            type="color"
+            id={ID.bgColorInput}
+            name="bgColor"
+            onChange={changeBgColorFromString}
+            value={bgColorHex}
+          ></input>
+          <ExpandableArea label="Custom colors">
+            <ErrorBoundary
+              fallbackRender={() => (
+                <p>Something went wrong when displaying the color picker.</p>
+              )}
+            >
+              <Suspense>
+                <LazyCustomColorPicker
+                  color={bgColor}
+                  onChange={changeBgColor}
+                />
+              </Suspense>
+            </ErrorBoundary>
+          </ExpandableArea>
+        </div>
+        <button className="DownloadButton" type="button" onClick={saveFile}>
+          Save
+        </button>
+        <ShareArea getFileToShare={getFileToShare} />
       </div>
     </div>
   );

@@ -174,10 +174,6 @@ label + input {
   margin-top: 0.5rem;
 }
 
-form > * + * {
-  margin-top: 1rem;
-}
-
 /* Hide content visually, but keep it in the DOM for assistive technologies
  * @see https://www.a11yproject.com/posts/how-to-hide-content/
  */

@@ -144,9 +144,9 @@ export function WorkArea() {
         processingAbortController.current?.abort();
         processingAbortController.current = new AbortController();
 
-        const [resizedCanvas1, resizedCanvas2] = await Promise.all([
-          blob &&
-            resizeToCanvas(blob, {
+        const [resizedCanvas1, resizedCanvas2] = await Promise.all(
+          [blob, blob2].filter(Boolean).map((blob) =>
+            resizeToCanvas(blob!, {
               maxWidth: isDiptych
                 ? (aspectRatio.width - OPTIONS.border) / 2
                 : aspectRatio.width - OPTIONS.border * 2,
@@ -154,20 +154,10 @@ export function WorkArea() {
                 ? aspectRatio.height - OPTIONS.border
                 : aspectRatio.height - OPTIONS.border / 2,
               allowUpscale: true,
-              signal: processingAbortController.current.signal,
-            }),
-          blob2 &&
-            resizeToCanvas(blob2, {
-              maxWidth: isDiptych
-                ? (aspectRatio.width - OPTIONS.border) / 2
-                : aspectRatio.width - OPTIONS.border * 2,
-              maxHeight: isDiptych
-                ? aspectRatio.height - OPTIONS.border
-                : aspectRatio.height - OPTIONS.border / 2,
-              allowUpscale: true,
-              signal: processingAbortController.current.signal,
-            }),
-        ]);
+              signal: processingAbortController.current!.signal,
+            })
+          )
+        );
 
         // Reset the abort controller, because it is no longer relevant
         processingAbortController.current = undefined;

@@ -79,8 +79,8 @@ export function WorkArea() {
 
   // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
   // will typically also redraw on the canvas
-  const originalFileRef = useRef<FileWithHandle>();
-  const originalFile2Ref = useRef<FileWithHandle>();
+  const originalFileRef = useRef<Blob>();
+  const originalFile2Ref = useRef<Blob>();
 
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
@@ -153,6 +153,7 @@ export function WorkArea() {
               maxHeight: isDiptych
                 ? aspectRatio.height - OPTIONS.border
                 : aspectRatio.height - OPTIONS.border / 2,
+              allowUpscale: true,
               signal: processingAbortController.current.signal,
             }),
           blob2 &&
@@ -163,6 +164,7 @@ export function WorkArea() {
               maxHeight: isDiptych
                 ? aspectRatio.height - OPTIONS.border
                 : aspectRatio.height - OPTIONS.border / 2,
+              allowUpscale: true,
               signal: processingAbortController.current.signal,
             }),
         ]);
@@ -324,21 +326,61 @@ export function WorkArea() {
 
   const selectFiles = useCallback(
     async (files: FileWithHandle[]) => {
+      // Nothing to do if no files were selected
       if (!files[0]) {
         return;
       }
-      // When the user selects files, we update the source canvas data, and re-draw
+
+      // Set the filenames for future reference
       setFilenames([files[0].name, files[1]?.name].filter(Boolean));
 
-      originalFileRef.current = files[0];
+      // When the user selects files, we:
+      //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
+      //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
+      //   2) Store those first-pass results to refs, for future resizing (e.g. changing aspect ratio)
+      // Cancel existing tasks and start a new one
+      setProcessingState("processing");
+      processingAbortController.current?.abort();
+      processingAbortController.current = new AbortController();
 
-      if (files[1]) {
-        originalFile2Ref.current = files[1];
+      // TODO: Instead of going through creating Blob() again, store the canvas and use pica for the second step?
+      // In practice, this does not seem to matter for performance, since we only convert once, but it might avoid extra artefacting on the image itself
+      const [resizedCanvas1, resizedCanvas2] = await Promise.all(
+        [files[0], files[1]].filter(Boolean).map((file) =>
+          resizeToCanvas(file, {
+            maxWidth: 2000,
+            maxHeight: 2000,
+            allowUpscale: true,
+            signal: processingAbortController.current!.signal,
+          }).then(
+            (c) =>
+              new Promise<Blob>((res, rej) => {
+                console.log("Intermediate", {
+                  width: c.width,
+                  height: c.height,
+                });
+                c.toBlob((maybeBlob) => {
+                  maybeBlob ? res(maybeBlob) : rej();
+                }, "image/jpeg");
+              })
+          )
+        )
+      );
+
+      // Reset the abort controller, because it is no longer relevant
+      processingAbortController.current = undefined;
+      setProcessingState("inert");
+
+      // Update canvas data, and redraw
+      originalFileRef.current = resizedCanvas1;
+
+      if (resizedCanvas2) {
+        originalFile2Ref.current = resizedCanvas2;
       }
 
       await updateCanvas({
-        blob: files[0],
-        blob2: files[1],
+        blob: resizedCanvas1,
+        blob2: resizedCanvas2,
         aspectRatio: aspectRatio,
         bgColor,
       });

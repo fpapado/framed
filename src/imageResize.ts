@@ -22,7 +22,24 @@ imageReducer._calculate_size = function (env: any) {
     env.opts.maxHeight / (isRotated90Deg ? env.image.width : env.image.height)
   );
 
-  if (scale_factor > 1) {
+  // Leave image as-is, if we do not allow upscaling
+  if (
+    process.env.NODE_ENV !== "production" &&
+    !env.opts.allowUpscale &&
+    scale_factor > 1
+  ) {
+    console.warn(
+      "The image is smaller than the resize dimensions; will *not* upscale."
+    );
+    scale_factor = 1;
+  }
+
+  // Warn if we allow upscaling, and image will be upscaled
+  if (
+    process.env.NODE_ENV !== "production" &&
+    env.opts.allowUpscale &&
+    scale_factor > 1
+  ) {
     console.warn(
       "The image is smaller than the resize dimensions; will upscale."
     );
@@ -43,17 +60,19 @@ imageReducer._calculate_size = function (env: any) {
 type ResizeToCanvasOpts = {
   maxWidth: number;
   maxHeight: number;
+  allowUpscale: boolean;
   /** Signal associated with the operation, and whether it has been canceled. Use it to cancel the resizing task */
   signal?: AbortSignal;
 };
 
 export async function resizeToCanvas(
   blob: Blob,
-  { maxWidth, maxHeight, signal }: ResizeToCanvasOpts
+  { maxWidth, maxHeight, signal, allowUpscale }: ResizeToCanvasOpts
 ): Promise<HTMLCanvasElement> {
   return imageReducer.toCanvas(blob, {
     maxWidth,
     maxHeight,
+    allowUpscale,
     cancelToken: signal && createCancelationToken(signal),
   });
 }

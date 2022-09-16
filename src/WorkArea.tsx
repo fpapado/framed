@@ -14,7 +14,12 @@ import React, {
 import { m } from "framer-motion";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { AspectRatio, AspectRatioId, drawImageWithBackground } from "./drawing";
+import {
+  AspectRatio,
+  AspectRatioId,
+  drawDiptychWithBackground,
+  drawImageWithBackground,
+} from "./drawing";
 import { FilePicker } from "./FilePicker";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
@@ -32,7 +37,7 @@ export const SUPPORTS_SHARE = Boolean(navigator.share);
 const OPTIONS = {
   /** Border in pixels */
   border: 64,
-  aspectRatio: "4x5" as AspectRatioId,
+  aspectRatio: "5x4" as AspectRatioId,
 };
 
 const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
@@ -54,6 +59,12 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
     width: 1080,
     height: 1920,
   },
+  "5x4": {
+    label: "5x4",
+    id: "5x4",
+    width: 2000,
+    height: 1600,
+  },
 };
 
 type ProcessingState = "inert" | "processing" | "error";
@@ -67,13 +78,16 @@ export function WorkArea() {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
   // Used to share the image between paint methods
   const canvasSrcRef = useRef<HTMLCanvasElement>();
+  const canvasSrc2Ref = useRef<HTMLCanvasElement>();
 
   // Keep a controller to cancel processing, e.g. when the user changes a setting
   const processingAbortController = useRef<AbortController>();
+  const processing2AbortController = useRef<AbortController>();
 
   // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
   // will typically also redraw on the canvas
   const originalFileRef = useRef<FileWithHandle>();
+  const originalFile2Ref = useRef<FileWithHandle>();
 
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
@@ -105,25 +119,46 @@ export function WorkArea() {
   const updateCanvas = useCallback(
     async ({
       blob,
+      blob2,
       aspectRatio,
       bgColor,
     }: {
       blob?: Blob;
+      blob2?: Blob;
       aspectRatio: AspectRatio;
       bgColor: Color;
     }) => {
       try {
         setProcessingState("processing");
 
-        // Resize blob, if one is specified
+        // We are rendering a diptych if either:
+        const isDiptych = !!(
+          // Both new images provided
+          (
+            (blob && blob2) ||
+            // New first image and old second one
+            (blob && canvasSrc2Ref.current) ||
+            // New second image and old first one
+            (blob2 && canvasSrcRef.current) ||
+            // Both old images (e.g. updating background color)
+            (canvasSrcRef.current && canvasSrc2Ref.current)
+          )
+        );
+
+        // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
+        // TODO: Could do resizing operations in parallel
         if (blob) {
           // Cancel existing tasks and start a new one
           processingAbortController.current?.abort();
           processingAbortController.current = new AbortController();
 
           const reducedCanvas = await resizeToCanvas(blob, {
-            maxWidth: aspectRatio.width - OPTIONS.border * 2,
-            maxHeight: aspectRatio.height - OPTIONS.border * 2,
+            maxWidth: isDiptych
+              ? (aspectRatio.width - OPTIONS.border) / 2
+              : aspectRatio.width - OPTIONS.border * 2,
+            maxHeight: isDiptych
+              ? aspectRatio.height - OPTIONS.border
+              : aspectRatio.height - OPTIONS.border / 2,
             signal: processingAbortController.current.signal,
           });
 
@@ -134,13 +169,49 @@ export function WorkArea() {
           canvasSrcRef.current = reducedCanvas;
         }
 
-        // Re-draw the image
-        drawImageWithBackground({
-          canvasSrc: canvasSrcRef.current,
-          canvasDest: canvasDestRef.current,
-          aspectRatio,
-          bgColor: bgColor.toString("hex"),
-        });
+        if (blob2) {
+          // Cancel existing tasks and start a new one
+          processing2AbortController.current?.abort();
+          processing2AbortController.current = new AbortController();
+
+          const reducedCanvas = await resizeToCanvas(blob2, {
+            maxWidth: isDiptych
+              ? (aspectRatio.width - OPTIONS.border) / 2
+              : aspectRatio.width - OPTIONS.border * 2,
+            maxHeight: isDiptych
+              ? aspectRatio.height - OPTIONS.border
+              : aspectRatio.height - OPTIONS.border / 2,
+            signal: processing2AbortController.current.signal,
+          });
+
+          // Reset the abort controller, because it is no longer relevant
+          processing2AbortController.current = undefined;
+
+          // Update the stored canvas for future operations (e.g. re-drawing after changing colour)
+          canvasSrc2Ref.current = reducedCanvas;
+        }
+
+        // Re-draw the image(s)
+        // TODO: We could change drawDiptych to a singular drawImages, which would make the choice based on how many images are provided
+        // This would allow us to skip the isDiptych branch here, at the cost of adding branching to the inner logic
+        if (isDiptych) {
+          drawDiptychWithBackground({
+            canvasSrc1: canvasSrcRef.current,
+            canvasSrc2: canvasSrc2Ref.current,
+            canvasDest: canvasDestRef.current,
+            gap: OPTIONS.border,
+            aspectRatio,
+            bgColor: bgColor.toString("hex"),
+          });
+        } else {
+          // Not a diptych; draw whichever blob is defined, or just the background
+          drawImageWithBackground({
+            canvasSrc: canvasSrcRef.current ?? canvasSrc2Ref.current,
+            canvasDest: canvasDestRef.current,
+            aspectRatio,
+            bgColor: bgColor.toString("hex"),
+          });
+        }
 
         setProcessingState("inert");
       } catch (err) {
@@ -155,7 +226,9 @@ export function WorkArea() {
     []
   );
 
-  /** Effect to listen for the share target and receive an image file */
+  /** Effect to listen for the share target and receive an image file
+   * TODO: Support two shared images
+   */
   useEffect(() => {
     /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
     let hasCleanedUp = false;
@@ -254,6 +327,7 @@ export function WorkArea() {
       // Make a new resized image from the original file, if needed
       await updateCanvas({
         blob: originalFileRef.current,
+        blob2: originalFile2Ref.current,
         aspectRatio: newAspectRatio,
         bgColor,
       });
@@ -269,6 +343,23 @@ export function WorkArea() {
 
       await updateCanvas({
         blob: file,
+        blob2: originalFile2Ref.current,
+        aspectRatio: aspectRatio,
+        bgColor,
+      });
+    },
+    [aspectRatio, bgColor, updateCanvas]
+  );
+
+  const selectFile2 = useCallback(
+    async (file: FileWithHandle) => {
+      // When the user selects a file, we update the source canvas data, and re-draw
+      // setFilename(file.name);
+      originalFile2Ref.current = file;
+
+      await updateCanvas({
+        blob: originalFileRef.current,
+        blob2: file,
         aspectRatio: aspectRatio,
         bgColor,
       });
@@ -372,7 +463,8 @@ export function WorkArea() {
             </div>
           </fieldset>
         </div>
-        <FilePicker onChange={selectFile}>Pick image</FilePicker>
+        <FilePicker onChange={selectFile}>Pick image 1</FilePicker>
+        <FilePicker onChange={selectFile2}>Pick image 2</FilePicker>
         <button className="DownloadButton" type="button" onClick={saveFile}>
           Save
         </button>

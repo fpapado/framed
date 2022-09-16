@@ -159,6 +159,7 @@ legend {
 
 .RadioGroup {
   display: flex;
+  flex-wrap: wrap;
   margin-top: 0.5rem;
   gap: 1rem;
 }
@@ -192,7 +193,7 @@ legend {
   .WorkArea {
     display: grid;
     grid-template-areas: "preview controls";
-    grid-template-columns: 28rem minmax(max-content, 16rem);
+    grid-template-columns: 28rem minmax(12rem, 22rem);
     justify-content: center;
     gap: 2rem;
   }

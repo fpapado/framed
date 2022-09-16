@@ -1,4 +1,4 @@
-export type AspectRatioId = "1x1" | "4x5" | "9x16" | "5x4";
+export type AspectRatioId = "1x1" | "4x5" | "9x16";
 
 export type AspectRatio = {
   id: AspectRatioId;

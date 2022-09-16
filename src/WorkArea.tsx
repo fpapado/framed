@@ -37,7 +37,7 @@ export const SUPPORTS_SHARE = Boolean(navigator.share);
 const OPTIONS = {
   /** Border in pixels */
   border: 64,
-  aspectRatio: "5x4" as AspectRatioId,
+  aspectRatio: "4x5" as AspectRatioId,
 };
 
 const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
@@ -58,12 +58,6 @@ const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
     id: "9x16",
     width: 1080,
     height: 1920,
-  },
-  "5x4": {
-    label: "5x4",
-    id: "5x4",
-    width: 2000,
-    height: 1600,
   },
 };
 
@@ -147,49 +141,42 @@ export function WorkArea() {
         );
 
         // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
-        // TODO: Could do resizing operations in parallel
-        if (blob) {
-          // Cancel existing tasks and start a new one
-          processingAbortController.current?.abort();
-          processingAbortController.current = new AbortController();
+        // Cancel existing tasks and start a new one
+        processingAbortController.current?.abort();
+        processingAbortController.current = new AbortController();
 
-          const reducedCanvas = await resizeToCanvas(blob, {
-            maxWidth: isDiptych
-              ? (aspectRatio.width - OPTIONS.border) / 2
-              : aspectRatio.width - OPTIONS.border * 2,
-            maxHeight: isDiptych
-              ? aspectRatio.height - OPTIONS.border
-              : aspectRatio.height - OPTIONS.border / 2,
-            signal: processingAbortController.current.signal,
-          });
+        const [resizedCanvas1, resizedCanvas2] = await Promise.all([
+          blob &&
+            resizeToCanvas(blob, {
+              maxWidth: isDiptych
+                ? (aspectRatio.width - OPTIONS.border) / 2
+                : aspectRatio.width - OPTIONS.border * 2,
+              maxHeight: isDiptych
+                ? aspectRatio.height - OPTIONS.border
+                : aspectRatio.height - OPTIONS.border / 2,
+              signal: processingAbortController.current.signal,
+            }),
+          blob2 &&
+            resizeToCanvas(blob2, {
+              maxWidth: isDiptych
+                ? (aspectRatio.width - OPTIONS.border) / 2
+                : aspectRatio.width - OPTIONS.border * 2,
+              maxHeight: isDiptych
+                ? aspectRatio.height - OPTIONS.border
+                : aspectRatio.height - OPTIONS.border / 2,
+              signal: processingAbortController.current.signal,
+            }),
+        ]);
 
-          // Reset the abort controller, because it is no longer relevant
-          processingAbortController.current = undefined;
+        // Reset the abort controller, because it is no longer relevant
+        processingAbortController.current = undefined;
 
-          // Update the stored canvas for future operations (e.g. re-drawing after changing colour)
-          canvasSrcRef.current = reducedCanvas;
+        // If the canvases were updated, update the stored canvas refs for future operations (e.g. re-drawing after changing colour)
+        if (resizedCanvas1) {
+          canvasSrcRef.current = resizedCanvas1;
         }
-
-        if (blob2) {
-          // Cancel existing tasks and start a new one
-          processing2AbortController.current?.abort();
-          processing2AbortController.current = new AbortController();
-
-          const reducedCanvas = await resizeToCanvas(blob2, {
-            maxWidth: isDiptych
-              ? (aspectRatio.width - OPTIONS.border) / 2
-              : aspectRatio.width - OPTIONS.border * 2,
-            maxHeight: isDiptych
-              ? aspectRatio.height - OPTIONS.border
-              : aspectRatio.height - OPTIONS.border / 2,
-            signal: processing2AbortController.current.signal,
-          });
-
-          // Reset the abort controller, because it is no longer relevant
-          processing2AbortController.current = undefined;
-
-          // Update the stored canvas for future operations (e.g. re-drawing after changing colour)
-          canvasSrc2Ref.current = reducedCanvas;
+        if (resizedCanvas2) {
+          canvasSrc2Ref.current = resizedCanvas2;
         }
 
         // Re-draw the image(s)

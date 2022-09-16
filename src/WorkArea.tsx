@@ -107,6 +107,7 @@ export function WorkArea() {
   const ID = {
     bgColorInput: `${id}-bgColor`,
     aspectRatioInput: `${id}-aspectRatio`,
+    filePickerDescription: `${id}-filePickerDescription`,
   };
 
   // Processing state for async operations
@@ -335,31 +336,22 @@ export function WorkArea() {
     [bgColor, updateCanvas]
   );
 
-  const selectFile = useCallback(
-    async (file: FileWithHandle) => {
+  const selectFiles = useCallback(
+    async (files: FileWithHandle[]) => {
+      if (!files[0]) {
+        return;
+      }
       // When the user selects a file, we update the source canvas data, and re-draw
-      setFilename(file.name);
-      originalFileRef.current = file;
+      setFilename(files[0].name);
+      originalFileRef.current = files[0];
+
+      if (files[1]) {
+        originalFile2Ref.current = files[1];
+      }
 
       await updateCanvas({
-        blob: file,
-        blob2: originalFile2Ref.current,
-        aspectRatio: aspectRatio,
-        bgColor,
-      });
-    },
-    [aspectRatio, bgColor, updateCanvas]
-  );
-
-  const selectFile2 = useCallback(
-    async (file: FileWithHandle) => {
-      // When the user selects a file, we update the source canvas data, and re-draw
-      // setFilename(file.name);
-      originalFile2Ref.current = file;
-
-      await updateCanvas({
-        blob: originalFileRef.current,
-        blob2: file,
+        blob: files[0],
+        blob2: files[1],
         aspectRatio: aspectRatio,
         bgColor,
       });
@@ -463,8 +455,16 @@ export function WorkArea() {
             </div>
           </fieldset>
         </div>
-        <FilePicker onChange={selectFile}>Pick image 1</FilePicker>
-        <FilePicker onChange={selectFile2}>Pick image 2</FilePicker>
+        <FilePicker
+          onChange={selectFiles}
+          multiple
+          aria-describedby={ID.filePickerDescription}
+        >
+          Pick image(s)
+        </FilePicker>
+        <p id={ID.filePickerDescription}>
+          Selecting multiple files will insert the first two as a diptych.
+        </p>
         <button className="DownloadButton" type="button" onClick={saveFile}>
           Save
         </button>

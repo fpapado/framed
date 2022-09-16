@@ -1,21 +1,33 @@
 import { fileOpen, FileWithHandle } from "browser-fs-access";
-import { PropsWithChildren, useCallback } from "react";
+import { AriaAttributes, PropsWithChildren, useCallback } from "react";
 
-type FilePickerProps = {
-  onChange: (file: FileWithHandle) => void;
-};
+type FilePickerProps<M extends boolean | undefined = false> = M extends
+  | false
+  | undefined
+  ? {
+      onChange: (file: FileWithHandle) => void;
+      multiple?: M;
+    }
+  : {
+      onChange: (file: FileWithHandle[]) => void;
+      multiple: M;
+    };
 
-export function FilePicker({
+export function FilePicker<M extends boolean>({
   onChange,
+  multiple,
   children,
-}: PropsWithChildren<FilePickerProps>) {
+  ...rest
+}: PropsWithChildren<FilePickerProps<M> & AriaAttributes>) {
   const onClick = useCallback(async () => {
     try {
-      const blob = await fileOpen({
+      const res = await fileOpen({
         mimeTypes: ["image/*"],
-        multiple: false,
+        multiple,
       });
-      onChange(blob);
+      // The types line up, but couldn't get them to pass internally
+      // @ts-expect-error
+      onChange(res);
     } catch (err) {
       // Ignore DOMException; those are thrown when the user does not select a file
       if (err instanceof DOMException) {
@@ -23,9 +35,9 @@ export function FilePicker({
       }
       throw err;
     }
-  }, [onChange]);
+  }, [multiple, onChange]);
   return (
-    <button type="button" className="FilePicker" onClick={onClick}>
+    <button type="button" className="FilePicker" onClick={onClick} {...rest}>
       {children}
     </button>
   );

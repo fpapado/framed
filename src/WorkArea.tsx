@@ -76,7 +76,6 @@ export function WorkArea() {
 
   // Keep a controller to cancel processing, e.g. when the user changes a setting
   const processingAbortController = useRef<AbortController>();
-  const processing2AbortController = useRef<AbortController>();
 
   // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
   // will typically also redraw on the canvas
@@ -92,7 +91,7 @@ export function WorkArea() {
   const bgColorHex = useMemo(() => bgColor.toString("hex"), [bgColor]);
 
   // TODO: This could be a ref, since it doesn't affect rendering per se
-  const [filename, setFilename] = useState<string>();
+  const [filenames, setFilenames] = useState<string[]>();
   const [aspectRatio, setAspectRatio] =
     useState<AspectRatio>(initialAspectRatio);
 
@@ -328,8 +327,9 @@ export function WorkArea() {
       if (!files[0]) {
         return;
       }
-      // When the user selects a file, we update the source canvas data, and re-draw
-      setFilename(files[0].name);
+      // When the user selects files, we update the source canvas data, and re-draw
+      setFilenames([files[0].name, files[1]?.name].filter(Boolean));
+
       originalFileRef.current = files[0];
 
       if (files[1]) {
@@ -353,7 +353,7 @@ export function WorkArea() {
           fileSave(blob, {
             fileName: makeOutputFilename({
               aspectRatio,
-              originalName: filename,
+              originalNames: filenames,
             }),
           });
         }
@@ -361,7 +361,7 @@ export function WorkArea() {
       "image/jpeg",
       0.75
     );
-  }, [aspectRatio, filename]);
+  }, [aspectRatio, filenames]);
 
   const getFileToShare = useCallback(() => {
     const imageType = "image/jpeg";
@@ -375,7 +375,7 @@ export function WorkArea() {
 
           const file = new File(
             [blob],
-            makeOutputFilename({ aspectRatio, originalName: filename }),
+            makeOutputFilename({ aspectRatio, originalNames: filenames }),
             { type: imageType }
           );
           resolve(file);
@@ -384,7 +384,7 @@ export function WorkArea() {
         0.75
       );
     });
-  }, [aspectRatio, filename]);
+  }, [aspectRatio, filenames]);
 
   return (
     <div className="WorkArea">
@@ -562,12 +562,21 @@ function ShareArea({
 
 function makeOutputFilename({
   aspectRatio,
-  originalName,
+  originalNames,
 }: {
   aspectRatio: AspectRatio;
-  originalName?: string;
+  originalNames?: string[];
 }) {
-  return `framed-${aspectRatio.id}-${originalName ? originalName : "canvas"}`;
+  const joinedNames = originalNames?.join("-");
+  const isDiptych = originalNames?.length! > 1 ?? false;
+  return [
+    "framed",
+    isDiptych && "diptych",
+    aspectRatio.id,
+    joinedNames ?? "canvas",
+  ]
+    .filter(Boolean)
+    .join("-");
 }
 
 /**

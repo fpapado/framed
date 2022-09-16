@@ -384,6 +384,14 @@ legend {
   max-width: 28rem;
   background: none !important;
   font: inherit !important;
+  padding-inline: calc(
+    (
+        var(
+            --spectrum-colorhandle-size,
+            var(--spectrum-global-dimension-size-200)
+          ) / 2
+      ) + 2px
+  );
 }
 
 .CustomColorPicker-Wrapper {

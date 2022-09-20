@@ -57,6 +57,8 @@ export function drawImageWithBackground({
   }
 }
 
+export type Split = "horizontal" | "vertical";
+
 /**
  * Draw two images with a specified background onto a canvas, fitting to the middle
  * @todo add `gap` property
@@ -69,6 +71,7 @@ export function drawDiptychWithBackground({
   aspectRatio,
   gap,
   bgColor,
+  split,
 }: {
   canvasSrc1?: HTMLCanvasElement | null;
   canvasSrc2?: HTMLCanvasElement | null;
@@ -76,6 +79,7 @@ export function drawDiptychWithBackground({
   gap: number;
   aspectRatio: AspectRatio;
   bgColor: string;
+  split: Split;
 }) {
   const canvasDestCtx = canvasDest?.getContext("2d");
 
@@ -94,10 +98,19 @@ export function drawDiptychWithBackground({
 
   // Then, draw scaled image, if specified
   if (canvasSrc1) {
-    // Justify center, minus gap
-    let dx = aspectRatio.width / 2 - canvasSrc1.width - gap / 4;
-    // Align center
-    let dy = (aspectRatio.height - canvasSrc1.height) / 2;
+    let dx: number, dy: number;
+
+    if (split === "horizontal") {
+      // Justify center, minus gap
+      dx = aspectRatio.width / 2 - canvasSrc1.width - gap / 4;
+      // Align center
+      dy = (aspectRatio.height - canvasSrc1.height) / 2;
+    } else {
+      // Align center
+      dx = (aspectRatio.width - canvasSrc1.width) / 2;
+      // Justify center, minus gap
+      dy = aspectRatio.height / 2 - canvasSrc1.height - gap / 4;
+    }
 
     if (process.env.NODE_ENV !== "production") {
       console.table({
@@ -114,10 +127,19 @@ export function drawDiptychWithBackground({
   }
 
   if (canvasSrc2) {
-    // Justify center, plus gap
-    let dx = aspectRatio.width / 2 + gap / 4;
-    // Align center
-    let dy = (aspectRatio.height - canvasSrc2.height) / 2;
+    let dx: number, dy: number;
+
+    if (split === "horizontal") {
+      // Justify center, plus gap
+      dx = aspectRatio.width / 2 + gap / 4;
+      // Align center
+      dy = (aspectRatio.height - canvasSrc2.height) / 2;
+    } else {
+      // Align center
+      dx = (aspectRatio.width - canvasSrc2.width) / 2;
+      // Justify center, plus gap
+      dy = aspectRatio.height / 2 + gap / 4;
+    }
 
     if (process.env.NODE_ENV !== "production") {
       console.table({

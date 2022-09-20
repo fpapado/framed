@@ -19,6 +19,7 @@ import {
   AspectRatioId,
   drawDiptychWithBackground,
   drawImageWithBackground,
+  Split,
 } from "./drawing";
 import { FilePicker } from "./FilePicker";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
@@ -66,7 +67,13 @@ type ProcessingState = "inert" | "processing" | "error";
 type SharingState = "inert" | "sharing" | "error" | "success";
 
 const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
+const initialSplitType: Split = "horizontal";
 const initialBgColor = parseColor("hsb(0, 0%, 100%)");
+
+const splitTypes: { value: Split; label: string }[] = [
+  { value: "horizontal", label: "Horizontal" },
+  { value: "vertical", label: "Vertical" },
+];
 
 export function WorkArea() {
   // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
@@ -94,12 +101,14 @@ export function WorkArea() {
   const [filenames, setFilenames] = useState<string[]>();
   const [aspectRatio, setAspectRatio] =
     useState<AspectRatio>(initialAspectRatio);
+  const [splitType, setSplitType] = useState<Split>(initialSplitType);
 
   // Ids and stuff
   const id = useId();
   const ID = {
     bgColorInput: `${id}-bgColor`,
     aspectRatioInput: `${id}-aspectRatio`,
+    splitTypeInput: `${id}-aspectRatio`,
     filePickerDescription: `${id}-filePickerDescription`,
   };
 
@@ -116,14 +125,18 @@ export function WorkArea() {
       blob2,
       aspectRatio,
       bgColor,
+      splitType,
     }: {
       blob?: Blob;
       blob2?: Blob;
       aspectRatio: AspectRatio;
       bgColor: Color;
+      splitType: Split;
     }) => {
       try {
         setProcessingState("processing");
+
+        console.log({ splitType });
 
         // We are rendering a diptych if either:
         const isDiptych = !!(
@@ -148,10 +161,14 @@ export function WorkArea() {
           [blob, blob2].filter(Boolean).map((blob) =>
             resizeToCanvas(blob!, {
               maxWidth: isDiptych
-                ? (aspectRatio.width - OPTIONS.border) / 2
+                ? splitType === "horizontal"
+                  ? (aspectRatio.width - OPTIONS.border) / 2
+                  : aspectRatio.width - OPTIONS.border
                 : aspectRatio.width - OPTIONS.border * 2,
               maxHeight: isDiptych
-                ? aspectRatio.height - OPTIONS.border
+                ? splitType === "horizontal"
+                  ? aspectRatio.height - OPTIONS.border
+                  : (aspectRatio.height - OPTIONS.border) / 2
                 : aspectRatio.height - OPTIONS.border / 2,
               allowUpscale: true,
               signal: processingAbortController.current!.signal,
@@ -181,6 +198,7 @@ export function WorkArea() {
             gap: OPTIONS.border,
             aspectRatio,
             bgColor: bgColor.toString("hex"),
+            split: splitType,
           });
         } else {
           // Not a diptych; draw whichever blob is defined, or just the background
@@ -234,6 +252,7 @@ export function WorkArea() {
         blob: file,
         aspectRatio: initialAspectRatio,
         bgColor: parseColor(initialBgColor.toString("hex")),
+        splitType: initialSplitType,
       });
     }
 
@@ -275,9 +294,10 @@ export function WorkArea() {
       updateCanvas({
         aspectRatio,
         bgColor: newColor,
+        splitType,
       });
     },
-    [aspectRatio, updateCanvas]
+    [aspectRatio, splitType, updateCanvas]
   );
 
   const changeBgColorFromString = useCallback(
@@ -290,6 +310,25 @@ export function WorkArea() {
       }
     },
     [changeBgColor]
+  );
+
+  const changeSplitType = useCallback(
+    (ev: React.ChangeEvent<HTMLInputElement>) => {
+      console.log(ev.target.value);
+      // TODO: Validate
+      const newSplitType = ev.target.value as Split;
+
+      setSplitType(newSplitType);
+
+      updateCanvas({
+        blob: originalFileRef.current,
+        blob2: originalFile2Ref.current,
+        aspectRatio,
+        bgColor,
+        splitType: newSplitType,
+      });
+    },
+    [aspectRatio, bgColor, updateCanvas]
   );
 
   const changeAspectRatio = useCallback(
@@ -309,9 +348,10 @@ export function WorkArea() {
         blob2: originalFile2Ref.current,
         aspectRatio: newAspectRatio,
         bgColor,
+        splitType,
       });
     },
-    [bgColor, updateCanvas]
+    [bgColor, splitType, updateCanvas]
   );
 
   const selectFiles = useCallback(
@@ -373,9 +413,10 @@ export function WorkArea() {
         blob2: resizedCanvas2,
         aspectRatio: aspectRatio,
         bgColor,
+        splitType,
       });
     },
-    [aspectRatio, bgColor, updateCanvas]
+    [aspectRatio, bgColor, splitType, updateCanvas]
   );
 
   const saveFile = useCallback(() => {
@@ -438,6 +479,30 @@ export function WorkArea() {
                     />
                     <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
                       {ar.label}
+                    </label>
+                  </div>
+                );
+              })}
+            </div>
+          </fieldset>
+        </div>
+        <div>
+          <fieldset>
+            <legend>Split Type</legend>
+            <div className="RadioGroup">
+              {splitTypes.map((split) => {
+                return (
+                  <div className="Radio" key={split.value}>
+                    <input
+                      type="radio"
+                      name="splitType"
+                      id={`${ID.splitTypeInput}-${split.value}`}
+                      value={split.value}
+                      onChange={changeSplitType}
+                      defaultChecked={splitType === split.value}
+                    />
+                    <label htmlFor={`${ID.splitTypeInput}-${split.value}`}>
+                      {split.label}
                     </label>
                   </div>
                 );

@@ -102,14 +102,14 @@ export function drawDiptychWithBackground({
 
     if (split === "horizontal") {
       // Justify center, minus gap
-      dx = aspectRatio.width / 2 - canvasSrc1.width - gap / 8;
+      dx = aspectRatio.width / 2 - canvasSrc1.width - gap * (3 / 16);
       // Align center
       dy = (aspectRatio.height - canvasSrc1.height) / 2;
     } else {
       // Align center
       dx = (aspectRatio.width - canvasSrc1.width) / 2;
       // Justify center, minus gap
-      dy = aspectRatio.height / 2 - canvasSrc1.height - gap / 8;
+      dy = aspectRatio.height / 2 - canvasSrc1.height - gap * (3 / 16);
     }
 
     if (process.env.NODE_ENV !== "production") {
@@ -131,14 +131,14 @@ export function drawDiptychWithBackground({
 
     if (split === "horizontal") {
       // Justify center, plus gap
-      dx = aspectRatio.width / 2 + gap / 8;
+      dx = aspectRatio.width / 2 + gap * (3 / 16);
       // Align center
       dy = (aspectRatio.height - canvasSrc2.height) / 2;
     } else {
       // Align center
       dx = (aspectRatio.width - canvasSrc2.width) / 2;
       // Justify center, plus gap
-      dy = aspectRatio.height / 2 + gap / 8;
+      dy = aspectRatio.height / 2 + gap * (3 / 16);
     }
 
     if (process.env.NODE_ENV !== "production") {

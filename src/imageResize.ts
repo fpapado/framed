@@ -77,6 +77,18 @@ export async function resizeToCanvas(
   });
 }
 
+export async function resizeToBlob(
+  blob: Blob,
+  { maxWidth, maxHeight, signal, allowUpscale }: ResizeToCanvasOpts
+): Promise<Blob> {
+  return imageReducer.toBlob(blob, {
+    maxWidth,
+    maxHeight,
+    allowUpscale,
+    cancelToken: signal && createCancelationToken(signal),
+  });
+}
+
 /**
  * Utility to create a cancelation token, which will reject if aborted, based on a signal.
  * This is backed by an AbortController/AbortSignal, which allows us to cancel the operations

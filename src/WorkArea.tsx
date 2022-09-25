@@ -25,7 +25,7 @@ import { FilePicker } from "./FilePicker";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { ArrowDown } from "./icons/ArrowDown";
-import { resizeToCanvas } from "./imageResize";
+import { resizeToBlob, resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
 
@@ -375,25 +375,14 @@ export function WorkArea() {
 
       // TODO: Instead of going through creating Blob() again, store the canvas and use pica for the second step?
       // In practice, this does not seem to matter for performance, since we only convert once, but it might avoid extra artefacting on the image itself
-      const [resizedCanvas1, resizedCanvas2] = await Promise.all(
+      const [resizedBlob1, resizedBlob2] = await Promise.all(
         [files[0], files[1]].filter(Boolean).map((file) =>
-          resizeToCanvas(file, {
+          resizeToBlob(file, {
             maxWidth: 2000,
             maxHeight: 2000,
             allowUpscale: true,
             signal: processingAbortController.current!.signal,
-          }).then(
-            (c) =>
-              new Promise<Blob>((res, rej) => {
-                console.log("Intermediate", {
-                  width: c.width,
-                  height: c.height,
-                });
-                c.toBlob((maybeBlob) => {
-                  maybeBlob ? res(maybeBlob) : rej();
-                }, "image/jpeg");
-              })
-          )
+          })
         )
       );
 
@@ -402,15 +391,15 @@ export function WorkArea() {
       setProcessingState("inert");
 
       // Update canvas data, and redraw
-      originalFileRef.current = resizedCanvas1;
+      originalFileRef.current = resizedBlob1;
 
-      if (resizedCanvas2) {
-        originalFile2Ref.current = resizedCanvas2;
+      if (resizedBlob2) {
+        originalFile2Ref.current = resizedBlob2;
       }
 
       await updateCanvas({
-        blob: resizedCanvas1,
-        blob2: resizedCanvas2,
+        blob: resizedBlob1,
+        blob2: resizedBlob2,
         aspectRatio: aspectRatio,
         bgColor,
         splitType,

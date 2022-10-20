@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "@adobe/react-spectrum": "^3.22.0",
-    "@imagemagick/magick-wasm": "^0.0.14",
     "@react-spectrum/color": "^3.0.0-beta.16",
     "@react-spectrum/provider": "^3.5.2",
     "@react-stately/color": "^3.2.0",

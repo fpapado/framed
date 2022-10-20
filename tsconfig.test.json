@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "types": ["node", "jest", "@testing-library/jest-dom"],
+  "include": ["src/**/*.test.tsx"]
+}

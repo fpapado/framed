@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import App from "./App";
+import React from "react";
 
-test("renders Pick image button", () => {
+test("renders Pick image button", async () => {
   render(<App />);
-  const buttonEl = screen.getByText(/Pick image/i);
-  expect(buttonEl).toBeInTheDocument();
+  expect(await screen.findByText(/Pick image/i)).toBeInTheDocument();
 });

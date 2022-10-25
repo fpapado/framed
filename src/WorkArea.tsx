@@ -116,9 +116,6 @@ export function WorkArea() {
   const [processingState, setProcessingState] =
     useState<ProcessingState>("inert");
 
-  // Consolidated loading state, where we want to show the user an indicator; usually when we are re-drawing or resizing
-  const isLoading = processingState === "processing";
-
   const updateCanvas = useCallback(
     async ({
       blob,
@@ -136,21 +133,18 @@ export function WorkArea() {
       try {
         setProcessingState("processing");
 
-        console.log({ splitType });
-
         // We are rendering a diptych if either:
-        const isDiptych = !!(
-          // Both new images provided
-          (
-            (blob && blob2) ||
-            // New first image and old second one
-            (blob && canvasSrc2Ref.current) ||
-            // New second image and old first one
-            (blob2 && canvasSrcRef.current) ||
-            // Both old images (e.g. updating background color)
-            (canvasSrcRef.current && canvasSrc2Ref.current)
-          )
-        );
+        // Both new images provided (e.g. picking two new images)
+        const bothNew = blob && blob2;
+
+        // Both old images (e.g. updating background color)
+        const bothOld = canvasSrcRef.current && canvasSrc2Ref.current;
+
+        // An update happens when a single blob changes, while a previous second src ref is present
+        // This happens when picking only one new image, in which case we must change from a diptych to a single
+        const isSingleImageUpdate = (blob && !blob2) || (blob2 && !blob);
+
+        const isDiptych = !isSingleImageUpdate && (bothNew || bothOld);
 
         // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
         // Cancel existing tasks and start a new one
@@ -179,7 +173,9 @@ export function WorkArea() {
         // Reset the abort controller, because it is no longer relevant
         processingAbortController.current = undefined;
 
-        // If the canvases were updated, update the stored canvas refs for future operations (e.g. re-drawing after changing colour)
+        // Update the stored canvas refs for future operations (e.g. re-drawing after changing colour)
+        // NOTE: Some operations do not specify a blob, e.g. those that just re-draw to change a colour
+        // Thus, it is important to not reset the src refs if resized canvases are blank (because the colour updates don't resize)
         if (resizedCanvas1) {
           canvasSrcRef.current = resizedCanvas1;
         }
@@ -314,7 +310,6 @@ export function WorkArea() {
 
   const changeSplitType = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
-      console.log(ev.target.value);
       // TODO: Validate
       const newSplitType = ev.target.value as Split;
 
@@ -393,8 +388,12 @@ export function WorkArea() {
       // Update canvas data, and redraw
       originalFileRef.current = resizedBlob1;
 
+      // If a second image exists, set it.
+      // Otherwise, reset the ref, in case the user wants to override a diptych with a single image.
       if (resizedBlob2) {
         originalFile2Ref.current = resizedBlob2;
+      } else {
+        originalFile2Ref.current = undefined;
       }
 
       await updateCanvas({
@@ -514,7 +513,9 @@ export function WorkArea() {
         <div className="CanvasWrapper">
           <canvas className="PreviewCanvas" ref={canvasDestRef}></canvas>
           {/* Consolidated loading indicator on top of the canvas */}
-          {isLoading && <div className="LoadingIndicator">Loading...</div>}
+          {processingState === "processing" && (
+            <div className="LoadingIndicator">Loading...</div>
+          )}
           {processingState === "error" && (
             <div className="ErrorIndicator">
               <p>
@@ -575,7 +576,7 @@ function ShareArea({
     // Unlikely, but possible; let's create an error for the user, just in case
     if (SUPPORTS_SHARE && !navigator.canShare({ files: [file] })) {
       console.error(
-        "System does not support sharing files, or this type of file"
+        "System does not support sharing files, or sharing this type of file."
       );
       setShareState("error");
       return;

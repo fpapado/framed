@@ -220,7 +220,7 @@ export function WorkArea() {
   );
 
   /** Effect to listen for the share target and receive an image file
-   * TODO: Support two shared images
+   * TODO: Support two/multiple shared images in the target
    */
   useEffect(() => {
     /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
@@ -310,7 +310,6 @@ export function WorkArea() {
 
   const changeSplitType = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
-      // TODO: Validate
       const newSplitType = ev.target.value as Split;
 
       setSplitType(newSplitType);
@@ -368,8 +367,6 @@ export function WorkArea() {
       processingAbortController.current?.abort();
       processingAbortController.current = new AbortController();
 
-      // TODO: Instead of going through creating Blob() again, store the canvas and use pica for the second step?
-      // In practice, this does not seem to matter for performance, since we only convert once, but it might avoid extra artefacting on the image itself
       const [resizedBlob1, resizedBlob2] = await Promise.all(
         [files[0], files[1]].filter(Boolean).map((file) =>
           resizeToBlob(file, {

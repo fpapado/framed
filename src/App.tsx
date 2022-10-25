@@ -1,4 +1,3 @@
-// TODO: Eye dropper for all platforms
 // TODO: Custom border
 // TODO: Custom size
 // TODO: Custom jpeg compression ratio
@@ -8,7 +7,7 @@ import { LazyMotion, MotionConfig } from "framer-motion";
 
 // Own app
 import { usePrefersReducedMotion } from "./animation/usePrefersReducedMotion";
-import { ServiceWorkerUpdatePrompt } from "./ServiceWorkerUpdatePrompt";
+import { ServiceWorkerUpdatePrompt } from "./serviceWorker/ServiceWorkerUpdatePrompt";
 import { WorkArea } from "./WorkArea";
 
 // Styles
@@ -71,6 +70,11 @@ function AppInner() {
         <p>
           You can use this app offline, by installing it via your browser's "Add
           to Home Screen" functionality.
+        </p>
+        <p>
+          <a href="https://github.com/fpapado/framed">
+            The code for this site is open-source on GitHub.
+          </a>
         </p>
       </footer>
     </>

@@ -61,8 +61,6 @@ export type Split = "horizontal" | "vertical";
 
 /**
  * Draw two images with a specified background onto a canvas, fitting to the middle
- * @todo add `gap` property
- * @param canvasDest
  */
 export function drawDiptychWithBackground({
   canvasDest,

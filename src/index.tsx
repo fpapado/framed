@@ -3,12 +3,12 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
-import * as serviceWorkerRegistration from "./serviceWorkerRegistration";
+import * as serviceWorkerRegistration from "./serviceWorker/serviceWorkerRegistration";
 import {
   changeHtmlPreference,
   getPreferenceFromStorage,
 } from "./colorScheme/colorScheme";
-import { ServiceWorkerManager } from "./ServiceWorkerUpdatePrompt";
+import { ServiceWorkerManager } from "./serviceWorker/ServiceWorkerUpdatePrompt";
 
 function init() {
   // Initialise color scheme, if user has selected one

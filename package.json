@@ -64,6 +64,8 @@
     "@types/pica": "^9.0.1",
     "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
+    "@types/testing-library__jest-dom": "^5.14.5",
+    "canvas": "^2.10.1",
     "patch-package": "^6.4.7",
     "user-agent-data-types": "^0.3.0"
   }

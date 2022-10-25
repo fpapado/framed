@@ -1,23 +1,10 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "types": ["./node_modules/user-agent-data-types"],
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "typeRoots": ["./node_modules/@types"]
-  },
+  "extends": "./tsconfig.base.json",
   "include": ["src"],
-  "exclude": ["src/**/*.test.tsx"]
+  "exclude": [
+    "src/**/*.test.tsx",
+    "src/**/*.test.ts",
+    "src/mocks/**/*",
+    "src/mocks/**/*"
+  ]
 }

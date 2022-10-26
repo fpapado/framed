@@ -26,7 +26,7 @@ import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { ArrowDown } from "./icons/ArrowDown";
 import { resizeToBlob, resizeToCanvas } from "./imageResize";
-import { getSharedImage } from "./swBridge";
+import { getSharedImage } from "./serviceWorker/swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
 
 const LazyCustomColorPicker = lazy(() =>

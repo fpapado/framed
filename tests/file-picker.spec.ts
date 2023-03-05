@@ -60,7 +60,12 @@ test("has title", async ({ page }) => {
   await expect(page).toHaveTitle(/Framed/);
 });
 
-test("Can pick a file", async ({ page }, testInfo) => {
+test("Can pick a file", async ({ page, browserName }, testInfo) => {
+  testInfo.fixme(
+    browserName === "webkit",
+    "Webkit does not fire filechooser events consistently"
+  );
+
   const respondWith = "tests/fixtures/picked-1.jpg";
   await page.goto(DEPLOY_URL);
 
@@ -68,34 +73,16 @@ test("Can pick a file", async ({ page }, testInfo) => {
   // this seems counter-intuitive, but Playwright does not provide helpers for the native API, since it is not widely supported.
   // Meanwhile, the code has a fallback to using input[type=file] when the native fs API is not supported, which means we can use Playwright's FileChooser API in that case.
   if (await supportsFsAccessAPI(page)) {
-    console.log("Supports fs access API, falling back");
     await mockFileAccessApi(page, respondWith);
-    await page.getByRole("button", { name: "Pick image(s)" }).click();
   } else {
-    const fileChooserPromise = page.waitForEvent("filechooser");
-    await page.getByRole("button", { name: "Pick image(s)" }).click();
-    await page.getByRole("button", { name: "Pick image(s)" }).click();
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(respondWith);
+    page.on("filechooser", async (fileChooser) => {
+      console.log("responding with file");
+      await fileChooser.setFiles(respondWith);
+    });
   }
 
+  await page.getByRole("button", { name: "Pick image(s)" }).click();
   await expect(page.getByText(/Loading.../)).toBeVisible();
   await expect(page.getByText(/Loading.../)).not.toBeVisible();
-
-  // const hasBlob = await page.locator("canvas").evaluate(async (canvas) => {
-  //   if (!canvas || !(canvas instanceof HTMLCanvasElement)) {
-  //     throw new Error("canvas locator must be a valid canvas element");
-  //   }
-  //   return new Promise<boolean>((res, rej) => {
-  //     canvas.toBlob((blob) => {
-  //       if (!blob) {
-  //         rej("No image data in canvas");
-  //       } else {
-  //         res(true);
-  //       }
-  //     });
-  //   });
-  // });
-  // expect(hasBlob).toBeTruthy();
   await expect(page.locator("canvas")).toHaveScreenshot();
 });

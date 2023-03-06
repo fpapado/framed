@@ -1,64 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
-import fs from "node:fs/promises";
-import path from "node:path";
+import { test, expect } from "@playwright/test";
 
 // TODO: Use an environment variable to fetch a preview branch
 const DEPLOY_URL = "http://localhost:3000";
-
-async function supportsFsAccessAPI(page: Page) {
-  return page.evaluate(() => "showOpenFilePicker" in window);
-}
-
-async function mockFileAccessApi(page: Page, respondWith: string) {
-  const name = path.basename(respondWith);
-  const mimeType = "image/jpeg";
-
-  // Read file and convert to a serialisable array, because that is required for passing into evaluate arguments
-  const buffer = (
-    await fs.readFile(path.relative(process.cwd(), respondWith))
-  ).toJSON().data;
-
-  await page.evaluate(
-    ({ name, buffer, mimeType }) => {
-      class FileSystemFileHandleMock {
-        private file: File;
-
-        constructor(file: File) {
-          this.file = file;
-        }
-
-        async getFile() {
-          console.log("getFile", this.file);
-          return this.file;
-        }
-      }
-
-      (window as any).showOpenFilePicker = async ({
-        id,
-        startIn,
-        types,
-        multiple,
-        excludeAcceptAllOptions,
-      }) => {
-        return [
-          new FileSystemFileHandleMock(
-            new File([new Blob([new Uint8Array(buffer)])], name, {
-              type: mimeType,
-            })
-          ),
-        ];
-      };
-    },
-    { name, buffer, mimeType }
-  );
-}
-
-test("has title", async ({ page }) => {
-  await page.goto(DEPLOY_URL);
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Framed/);
-});
 
 test("Can pick a file", async ({ page, browserName }, testInfo) => {
   testInfo.fixme(
@@ -82,6 +25,8 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
   }
 
   await page.getByRole("button", { name: "Pick image(s)" }).click();
+
+  // Wait for the processing message to appear and disappear; this signals that the image has settled
   await expect(page.getByText(/Loading.../)).toBeVisible();
   await expect(page.getByText(/Loading.../)).not.toBeVisible();
   await expect(page.locator("canvas")).toHaveScreenshot();

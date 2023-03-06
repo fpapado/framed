@@ -2,6 +2,7 @@
   "name": "framed",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@7.29.0",
   "dependencies": {
     "@adobe/react-spectrum": "^3.25.1",
     "@react-spectrum/color": "3.0.0-beta.20",
@@ -61,6 +62,6 @@
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "patch-package": "^6.5.1",
-    "user-agent-data-types": "^0.3.0"
+    "user-agent-data-types": "^0.3.1"
   }
 }

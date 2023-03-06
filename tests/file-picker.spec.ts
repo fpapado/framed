@@ -20,6 +20,7 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
   // this seems counter-intuitive, but Playwright does not provide helpers for the native API, since it is not widely supported.
   // Meanwhile, the code has a fallback to using input[type=file] when the native fs API is not supported, which means we can use Playwright's FileChooser API in that case.
   if (await supportsFsAccessAPI(page)) {
+    testInfo.slow(); // The buffer serialisation takes a while on CI
     await mockFileAccessApi(page, respondWith);
   } else {
     page.on("filechooser", async (fileChooser) => {

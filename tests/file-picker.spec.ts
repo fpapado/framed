@@ -23,7 +23,6 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
     await mockFileAccessApi(page, respondWith);
   } else {
     page.on("filechooser", async (fileChooser) => {
-      console.log("responding with file");
       await fileChooser.setFiles(respondWith);
     });
   }

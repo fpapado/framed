@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+import {
+  mockFileAccessApi,
+  supportsFsAccessAPI,
+} from "./utils/native-fs-access-api";
 
 // TODO: Use an environment variable to fetch a preview branch
 const DEPLOY_URL = "http://localhost:3000";

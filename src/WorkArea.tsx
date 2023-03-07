@@ -1,6 +1,13 @@
-import { atom, computed, react } from "signia";
-import { track } from "signia-react";
+import { track, useAtom, useComputed } from "signia-react";
 
+import {
+  ASPECT_RATIOS,
+  Canvas,
+  initialAspectRatio,
+  initialBgColor,
+  ProcessingState,
+  splitTypes,
+} from "./Canvas";
 import { parseColor } from "@react-stately/color";
 import { FileWithHandle, fileSave } from "browser-fs-access";
 import React, {
@@ -37,164 +44,12 @@ const LazyCustomColorPicker = lazy(() =>
 );
 
 export const SUPPORTS_SHARE = Boolean(navigator.share);
-
-const OPTIONS = {
-  /** Border in pixels */
-  border: 64,
-  aspectRatio: "4x5" as AspectRatioId,
-};
-
-const ASPECT_RATIOS: Record<AspectRatioId, AspectRatio> = {
-  "1x1": {
-    label: "Square",
-    id: "1x1",
-    width: 2000,
-    height: 2000,
-  },
-  "4x5": {
-    label: "4x5",
-    id: "4x5",
-    width: 1600,
-    height: 2000,
-  },
-  "9x16": {
-    label: "9x16",
-    id: "9x16",
-    width: 1080,
-    height: 1920,
-  },
-};
-
-type ProcessingState = "inert" | "processing" | "error";
-
 type SharingState = "inert" | "sharing" | "error" | "success";
 
-const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
-const initialSplitType: Split = "horizontal";
-const initialBgColor = parseColor("hsb(0, 0%, 100%)");
-
-const splitTypes: { value: Split; label: string }[] = [
-  { value: "horizontal", label: "Horizontal" },
-  { value: "vertical", label: "Vertical" },
-];
-
-// Canvas.ts
-
-const bgColor = atom("bgColor", initialBgColor);
-const aspectRatio = atom("aspectRatio", initialAspectRatio);
-const splitType = atom<Split>("splitType", initialSplitType);
-const canvasSrc = atom<HTMLCanvasElement | null>("canvasSrc", null);
-const canvasSrc2 = atom<HTMLCanvasElement | null>("canvasSrc2", null);
-const filenames = atom("filenames", null);
-
-const originalFile = atom("originalFile", null);
-const originalFile2 = atom("originalFile2", null);
-
-const blob = atom<Blob | null>("blob", null);
-const blob2 = atom<Blob | null>("blob2", null);
-
-const processingState = atom<ProcessingState>("processingState", "inert");
-const colorHex = computed("colorHex", () => {
-  return bgColor.value.toString("hex");
-});
-
-react("colorLog", () => {
-  console.log({ colorHex: colorHex.value });
-});
-
-const resizedCanvases = computed("resizedCanvases", async () => {
-  try {
-    console.log(blob.value, blob2.value);
-    if (!blob.value && !blob2.value) {
-      return;
-    }
-
-    // processingState.set("processing");
-
-    const isDiptych = blob.value && blob2.value;
-
-    // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
-    // TODO: implement cancelation
-    const [resizedCanvas1, resizedCanvas2] = await Promise.all(
-      [blob.value, blob2.value].filter(Boolean).map((blob) =>
-        resizeToCanvas(blob!, {
-          maxWidth: isDiptych
-            ? splitType.value === "horizontal"
-              ? (aspectRatio.value.width - OPTIONS.border) / 2
-              : aspectRatio.value.width - OPTIONS.border
-            : aspectRatio.value.width - OPTIONS.border * 2,
-          maxHeight: isDiptych
-            ? splitType.value === "horizontal"
-              ? aspectRatio.value.height - OPTIONS.border
-              : (aspectRatio.value.height - OPTIONS.border) / 2
-            : aspectRatio.value.height - OPTIONS.border / 2,
-          allowUpscale: true,
-        })
-      )
-    );
-
-    // processingState.set("inert");
-    return [resizedCanvas1, resizedCanvas2] as const;
-  } catch (err) {
-    // Ignore error if it is a cancelation error; this is expected
-    if (err instanceof DOMException && err.name === "AbortError") {
-      return;
-    }
-    console.error(new Error("Unaccounted error when resizing", { cause: err }));
-    console.error(err);
-    // processingState.set("error");
-  }
-});
-
-const drawOnCanvas = (canvasDest: HTMLCanvasElement) => {
-  // TODO: Batch these on animation frames or something similar (so that changing the colour does not keep firing)
-  // TODO: Some incremental approach to resizedCanvases
-  // TODO: Support cancelation
-  return react("drawOnCanvas", async () => {
-    console.log("drawOnCanvas called");
-    // NOTE: We must destructure this before the await point, to ensure that the dependency is tracked correctly
-    const { value: colorHexValue } = colorHex;
-    const canvases = await resizedCanvases.value;
-    if (!canvases) {
-      // Without images, just draw the bgColor
-      drawImageWithBackground({
-        canvasSrc: null,
-        canvasDest: canvasDest,
-        aspectRatio: aspectRatio.value,
-        bgColor: colorHexValue,
-      });
-      return;
-    }
-
-    const [resizedCanvas1, resizedCanvas2] = canvases;
-    const isDiptych = resizedCanvas1 && resizedCanvas2;
-
-    // Re-draw the image(s)
-    // TODO: We could change drawDiptych to a singular drawImages, which would make the choice based on how many images are provided
-    // This would allow us to skip the isDiptych branch here, at the cost of adding branching to the inner logic
-    if (isDiptych) {
-      drawDiptychWithBackground({
-        canvasSrc1: resizedCanvas1,
-        canvasSrc2: resizedCanvas2,
-        canvasDest: canvasDest,
-        gap: OPTIONS.border,
-        aspectRatio: aspectRatio.value,
-        bgColor: colorHexValue,
-        split: splitType.value,
-      });
-    } else {
-      // Not a diptych; draw whichever blob is defined, or just the background
-      drawImageWithBackground({
-        canvasSrc: resizedCanvas1 ?? resizedCanvas2,
-        canvasDest: canvasDest,
-        aspectRatio: aspectRatio.value,
-        bgColor: colorHexValue,
-      });
-    }
-  });
-};
-
 export const WorkArea = track(function WorkArea() {
+  const canvas = useMemo(() => new Canvas(), []);
+  const processingState = useAtom<ProcessingState>("processingState", "inert");
+
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
 
@@ -212,7 +67,7 @@ export const WorkArea = track(function WorkArea() {
 
   useEffect(() => {
     console.log("Dest ref", canvasDestRef.current);
-    return drawOnCanvas(canvasDestRef.current!);
+    return canvas.drawOnCanvas(canvasDestRef.current!);
   }, []);
 
   /** Effect to listen for the share target and receive an image file
@@ -284,7 +139,7 @@ export const WorkArea = track(function WorkArea() {
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       try {
         const newColor = parseColor(ev.target.value).toFormat("hsb");
-        bgColor.set(newColor);
+        canvas.setBgColor(newColor);
       } catch (err) {
         // Ignore parse errors, but don't set the colour
       }
@@ -295,8 +150,7 @@ export const WorkArea = track(function WorkArea() {
   const changeSplitType = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       const newSplitType = ev.target.value as Split;
-
-      splitType.set(newSplitType);
+      canvas.setSplitType(newSplitType);
     },
     []
   );
@@ -310,7 +164,7 @@ export const WorkArea = track(function WorkArea() {
         return;
       }
 
-      aspectRatio.set(newAspectRatio);
+      canvas.setAspectRatio(newAspectRatio);
     },
     []
   );
@@ -327,7 +181,7 @@ export const WorkArea = track(function WorkArea() {
     // When the user selects files, we:
     //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
     //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
-    //   2) Store those first-pass results to refs, for future resizing (e.g. changing aspect ratio)
+    //   2) Store those first-pass results to to the canvas blob, for future resizing (e.g. changing aspect ratio)
     // Cancel existing tasks and start a new one
     processingState.set("processing");
 
@@ -344,11 +198,11 @@ export const WorkArea = track(function WorkArea() {
     processingState.set("inert");
 
     // Update canvas data, and redraw
-    blob.set(resizedBlob1);
+    canvas.setBlob(resizedBlob1);
 
     // If a second image exists, set it.
     // Otherwise, reset the ref, in case the user wants to override a diptych with a single image.
-    blob2.set(resizedBlob2 ?? undefined);
+    canvas.setBlob2(resizedBlob2 ?? null);
   }, []);
 
   const saveFile = useCallback(() => {
@@ -357,7 +211,7 @@ export const WorkArea = track(function WorkArea() {
         if (blob) {
           fileSave(blob, {
             fileName: makeOutputFilename({
-              aspectRatio: aspectRatio.value,
+              aspectRatio: canvas.aspectRatio,
               originalNames: filenames,
             }),
           });
@@ -381,7 +235,7 @@ export const WorkArea = track(function WorkArea() {
           const file = new File(
             [blob],
             makeOutputFilename({
-              aspectRatio: aspectRatio.value,
+              aspectRatio: canvas.aspectRatio,
               originalNames: filenames,
             }),
             { type: imageType }
@@ -410,7 +264,7 @@ export const WorkArea = track(function WorkArea() {
                       id={`${ID.aspectRatioInput}-${ar.id}`}
                       value={ar.id}
                       onChange={changeAspectRatio}
-                      defaultChecked={aspectRatio.value.id === ar.id}
+                      defaultChecked={canvas.aspectRatio.id === ar.id}
                     />
                     <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
                       {ar.label}
@@ -434,7 +288,7 @@ export const WorkArea = track(function WorkArea() {
                       id={`${ID.splitTypeInput}-${split.value}`}
                       value={split.value}
                       onChange={changeSplitType}
-                      defaultChecked={splitType.value === split.value}
+                      defaultChecked={canvas.splitType === split.value}
                     />
                     <label htmlFor={`${ID.splitTypeInput}-${split.value}`}>
                       {split.label}
@@ -481,8 +335,8 @@ export const WorkArea = track(function WorkArea() {
             id={ID.bgColorInput}
             name="bgColor"
             onChange={changeBgColorFromString}
-            value={colorHex.value}
-          ></input>
+            value={canvas.colorHex}
+          />
           <ExpandableArea label="Custom colors">
             <ErrorBoundary
               fallbackRender={() => (
@@ -491,8 +345,8 @@ export const WorkArea = track(function WorkArea() {
             >
               <Suspense>
                 <LazyCustomColorPicker
-                  color={bgColor.value}
-                  onChange={(color) => bgColor.set(color)}
+                  color={canvas.bgColor}
+                  onChange={(color) => canvas.setBgColor(color)}
                 />
               </Suspense>
             </ErrorBoundary>

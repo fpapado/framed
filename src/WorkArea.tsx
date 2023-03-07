@@ -1,4 +1,7 @@
-import { Color, parseColor } from "@react-stately/color";
+import { atom, computed, react } from "signia";
+import { track } from "signia-react";
+
+import { parseColor } from "@react-stately/color";
 import { FileWithHandle, fileSave } from "browser-fs-access";
 import React, {
   useRef,
@@ -75,15 +78,99 @@ const splitTypes: { value: Split; label: string }[] = [
   { value: "vertical", label: "Vertical" },
 ];
 
-export function WorkArea() {
-  // Image canvas, containting data after transforming / scaling, but not the one that we paint on screen
-  // Used to share the image between paint methods
-  const canvasSrcRef = useRef<HTMLCanvasElement>();
-  const canvasSrc2Ref = useRef<HTMLCanvasElement>();
+// Canvas.ts
 
-  // Keep a controller to cancel processing, e.g. when the user changes a setting
-  const processingAbortController = useRef<AbortController>();
+const bgColor = atom("bgColor", initialBgColor);
+const aspectRatio = atom("aspectRatio", initialAspectRatio);
+const splitType = atom<Split>("splitType", initialSplitType);
+const canvasSrc = atom<HTMLCanvasElement | null>("canvasSrc", null);
+const canvasSrc2 = atom<HTMLCanvasElement | null>("canvasSrc2", null);
+const filenames = atom("filenames", null);
 
+const originalFile = atom("originalFile", null);
+const originalFile2 = atom("originalFile2", null);
+
+const blob = atom<Blob | null>("blob", null);
+const blob2 = atom<Blob | null>("blob2", null);
+
+const processingState = atom<ProcessingState>("processingState", "inert");
+const colorHex = computed("colorHex", () => {
+  return bgColor.value.toString("hex");
+});
+
+const resizedCanvases = computed("canvasDest", async () => {
+  try {
+    processingState.set("processing");
+
+    const isDiptych = blob.value && blob2.value;
+
+    // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
+    // TODO: implement cancelation
+    const [resizedCanvas1, resizedCanvas2] = await Promise.all(
+      [blob, blob2].filter(Boolean).map((blob) =>
+        resizeToCanvas(blob.value!, {
+          maxWidth: isDiptych
+            ? splitType.value === "horizontal"
+              ? (aspectRatio.value.width - OPTIONS.border) / 2
+              : aspectRatio.value.width - OPTIONS.border
+            : aspectRatio.value.width - OPTIONS.border * 2,
+          maxHeight: isDiptych
+            ? splitType.value === "horizontal"
+              ? aspectRatio.value.height - OPTIONS.border
+              : (aspectRatio.value.height - OPTIONS.border) / 2
+            : aspectRatio.value.height - OPTIONS.border / 2,
+          allowUpscale: true,
+        })
+      )
+    );
+
+    processingState.set("inert");
+    return [resizedCanvas1, resizedCanvas2] as const;
+  } catch (err) {
+    // Ignore error if it is a cancelation error; this is expected
+    if (err instanceof DOMException && err.name === "AbortError") {
+      return;
+    }
+    console.error("Unaccounted error: ", err);
+    processingState.set("error");
+  }
+});
+
+const drawOnCanvas = (canvasDest: HTMLCanvasElement) => {
+  react("drawOnCanvas", async () => {
+    const canvases = await resizedCanvases.value;
+    if (!canvases) {
+      return;
+    }
+    const [resizedCanvas1, resizedCanvas2] = canvases;
+    const isDiptych = resizedCanvas1 && resizedCanvas2;
+
+    // Re-draw the image(s)
+    // TODO: We could change drawDiptych to a singular drawImages, which would make the choice based on how many images are provided
+    // This would allow us to skip the isDiptych branch here, at the cost of adding branching to the inner logic
+    if (isDiptych) {
+      drawDiptychWithBackground({
+        canvasSrc1: resizedCanvas1,
+        canvasSrc2: resizedCanvas2,
+        canvasDest: canvasDest,
+        gap: OPTIONS.border,
+        aspectRatio: aspectRatio.value,
+        bgColor: bgColor.value.toString("hex"),
+        split: splitType.value,
+      });
+    } else {
+      // Not a diptych; draw whichever blob is defined, or just the background
+      drawImageWithBackground({
+        canvasSrc: resizedCanvas1 ?? resizedCanvas2,
+        canvasDest: canvasDest,
+        aspectRatio: aspectRatio.value,
+        bgColor: bgColor.value.toString("hex"),
+      });
+    }
+  });
+};
+
+export const WorkArea = track(function WorkArea() {
   // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
   // will typically also redraw on the canvas
   const originalFileRef = useRef<Blob>();
@@ -93,15 +180,12 @@ export function WorkArea() {
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
 
   // State/options based on user selections
-  const [bgColor, setBgColor] = useState(initialBgColor);
-
-  const bgColorHex = useMemo(() => bgColor.toString("hex"), [bgColor]);
+  const changeBgColor = bgColor.set;
+  const setAspectRatio = aspectRatio.set;
+  const setSplitType = splitType.set;
 
   // TODO: This could be a ref, since it doesn't affect rendering per se
   const [filenames, setFilenames] = useState<string[]>();
-  const [aspectRatio, setAspectRatio] =
-    useState<AspectRatio>(initialAspectRatio);
-  const [splitType, setSplitType] = useState<Split>(initialSplitType);
 
   // Ids and stuff
   const id = useId();
@@ -113,152 +197,50 @@ export function WorkArea() {
   };
 
   // Processing state for async operations
-  const [processingState, setProcessingState] =
-    useState<ProcessingState>("inert");
+  const setProcessingState = processingState.set;
 
-  const updateCanvas = useCallback(
-    async ({
-      blob,
-      blob2,
-      aspectRatio,
-      bgColor,
-      splitType,
-    }: {
-      blob?: Blob;
-      blob2?: Blob;
-      aspectRatio: AspectRatio;
-      bgColor: Color;
-      splitType: Split;
-    }) => {
-      try {
-        setProcessingState("processing");
-
-        // We are rendering a diptych if either:
-        // Both new images provided (e.g. picking two new images)
-        const bothNew = blob && blob2;
-
-        // Both old images (e.g. updating background color)
-        const bothOld = canvasSrcRef.current && canvasSrc2Ref.current;
-
-        // An update happens when a single blob changes, while a previous second src ref is present
-        // This happens when picking only one new image, in which case we must change from a diptych to a single
-        const isSingleImageUpdate = (blob && !blob2) || (blob2 && !blob);
-
-        const isDiptych = !isSingleImageUpdate && (bothNew || bothOld);
-
-        // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
-        // Cancel existing tasks and start a new one
-        processingAbortController.current?.abort();
-        processingAbortController.current = new AbortController();
-
-        const [resizedCanvas1, resizedCanvas2] = await Promise.all(
-          [blob, blob2].filter(Boolean).map((blob) =>
-            resizeToCanvas(blob!, {
-              maxWidth: isDiptych
-                ? splitType === "horizontal"
-                  ? (aspectRatio.width - OPTIONS.border) / 2
-                  : aspectRatio.width - OPTIONS.border
-                : aspectRatio.width - OPTIONS.border * 2,
-              maxHeight: isDiptych
-                ? splitType === "horizontal"
-                  ? aspectRatio.height - OPTIONS.border
-                  : (aspectRatio.height - OPTIONS.border) / 2
-                : aspectRatio.height - OPTIONS.border / 2,
-              allowUpscale: true,
-              signal: processingAbortController.current!.signal,
-            })
-          )
-        );
-
-        // Reset the abort controller, because it is no longer relevant
-        processingAbortController.current = undefined;
-
-        // Update the stored canvas refs for future operations (e.g. re-drawing after changing colour)
-        // NOTE: Some operations do not specify a blob, e.g. those that just re-draw to change a colour
-        // Thus, it is important to not reset the src refs if resized canvases are blank (because the colour updates don't resize)
-        if (resizedCanvas1) {
-          canvasSrcRef.current = resizedCanvas1;
-        }
-        if (resizedCanvas2) {
-          canvasSrc2Ref.current = resizedCanvas2;
-        }
-
-        // Re-draw the image(s)
-        // TODO: We could change drawDiptych to a singular drawImages, which would make the choice based on how many images are provided
-        // This would allow us to skip the isDiptych branch here, at the cost of adding branching to the inner logic
-        if (isDiptych) {
-          drawDiptychWithBackground({
-            canvasSrc1: canvasSrcRef.current,
-            canvasSrc2: canvasSrc2Ref.current,
-            canvasDest: canvasDestRef.current,
-            gap: OPTIONS.border,
-            aspectRatio,
-            bgColor: bgColor.toString("hex"),
-            split: splitType,
-          });
-        } else {
-          // Not a diptych; draw whichever blob is defined, or just the background
-          drawImageWithBackground({
-            canvasSrc: canvasSrcRef.current ?? canvasSrc2Ref.current,
-            canvasDest: canvasDestRef.current,
-            aspectRatio,
-            bgColor: bgColor.toString("hex"),
-          });
-        }
-
-        setProcessingState("inert");
-      } catch (err) {
-        // Ignore error if it is a cancelation error; this is expected
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
-        console.error("Unaccounted error: ", err);
-        setProcessingState("error");
-      }
-    },
-    []
-  );
+  useEffect(() => drawOnCanvas(canvasDestRef.current!), []);
 
   /** Effect to listen for the share target and receive an image file
    * TODO: Support two/multiple shared images in the target
    */
-  useEffect(() => {
-    /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
-    let hasCleanedUp = false;
-    const awaitingShareTarget = new URL(window.location.href).searchParams.has(
-      "share-target"
-    );
+  // useEffect(() => {
+  //   /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
+  //   let hasCleanedUp = false;
+  //   const awaitingShareTarget = new URL(window.location.href).searchParams.has(
+  //     "share-target"
+  //   );
 
-    if (!awaitingShareTarget) {
-      return;
-    }
+  //   if (!awaitingShareTarget) {
+  //     return;
+  //   }
 
-    console.info("Awaiting share target");
+  //   console.info("Awaiting share target");
 
-    async function effectInner() {
-      setProcessingState("processing");
-      const file = await getSharedImage();
+  //   async function effectInner() {
+  //     setProcessingState("processing");
+  //     const file = await getSharedImage();
 
-      if (hasCleanedUp) return;
+  //     if (hasCleanedUp) return;
 
-      // Remove the ?share-target from the URL
-      window.history.replaceState("", "", "/");
+  //     // Remove the ?share-target from the URL
+  //     window.history.replaceState("", "", "/");
 
-      await updateCanvas({
-        blob: file,
-        aspectRatio: initialAspectRatio,
-        bgColor: parseColor(initialBgColor.toString("hex")),
-        splitType: initialSplitType,
-      });
-    }
+  //     await updateCanvas({
+  //       blob: file,
+  //       aspectRatio: initialAspectRatio,
+  //       bgColor: parseColor(initialBgColor.toString("hex")),
+  //       splitType: initialSplitType,
+  //     });
+  //   }
 
-    effectInner();
+  //   effectInner();
 
-    return () => {
-      hasCleanedUp = true;
-      setProcessingState("inert");
-    };
-  }, [updateCanvas]);
+  //   return () => {
+  //     hasCleanedUp = true;
+  //     setProcessingState("inert");
+  //   };
+  // }, [updateCanvas]);
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -284,18 +266,6 @@ export function WorkArea() {
     );
   }, []);
 
-  const changeBgColor = useCallback(
-    (newColor: Color) => {
-      setBgColor(newColor);
-      updateCanvas({
-        aspectRatio,
-        bgColor: newColor,
-        splitType,
-      });
-    },
-    [aspectRatio, splitType, updateCanvas]
-  );
-
   const changeBgColorFromString = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       try {
@@ -313,16 +283,8 @@ export function WorkArea() {
       const newSplitType = ev.target.value as Split;
 
       setSplitType(newSplitType);
-
-      updateCanvas({
-        blob: originalFileRef.current,
-        blob2: originalFile2Ref.current,
-        aspectRatio,
-        bgColor,
-        splitType: newSplitType,
-      });
     },
-    [aspectRatio, bgColor, updateCanvas]
+    [setSplitType]
   );
 
   const changeAspectRatio = useCallback(
@@ -335,17 +297,8 @@ export function WorkArea() {
       }
 
       setAspectRatio(newAspectRatio);
-
-      // Make a new resized image from the original file, if needed
-      await updateCanvas({
-        blob: originalFileRef.current,
-        blob2: originalFile2Ref.current,
-        aspectRatio: newAspectRatio,
-        bgColor,
-        splitType,
-      });
     },
-    [bgColor, splitType, updateCanvas]
+    [setAspectRatio]
   );
 
   const selectFiles = useCallback(
@@ -364,8 +317,6 @@ export function WorkArea() {
       //   2) Store those first-pass results to refs, for future resizing (e.g. changing aspect ratio)
       // Cancel existing tasks and start a new one
       setProcessingState("processing");
-      processingAbortController.current?.abort();
-      processingAbortController.current = new AbortController();
 
       const [resizedBlob1, resizedBlob2] = await Promise.all(
         [files[0], files[1]].filter(Boolean).map((file) =>
@@ -373,35 +324,20 @@ export function WorkArea() {
             maxWidth: 2000,
             maxHeight: 2000,
             allowUpscale: true,
-            signal: processingAbortController.current!.signal,
           })
         )
       );
 
-      // Reset the abort controller, because it is no longer relevant
-      processingAbortController.current = undefined;
       setProcessingState("inert");
 
       // Update canvas data, and redraw
-      originalFileRef.current = resizedBlob1;
+      blob.set(resizedBlob1);
 
       // If a second image exists, set it.
       // Otherwise, reset the ref, in case the user wants to override a diptych with a single image.
-      if (resizedBlob2) {
-        originalFile2Ref.current = resizedBlob2;
-      } else {
-        originalFile2Ref.current = undefined;
-      }
-
-      await updateCanvas({
-        blob: resizedBlob1,
-        blob2: resizedBlob2,
-        aspectRatio: aspectRatio,
-        bgColor,
-        splitType,
-      });
+      blob2.set(resizedBlob2 ?? undefined);
     },
-    [aspectRatio, bgColor, splitType, updateCanvas]
+    [setProcessingState]
   );
 
   const saveFile = useCallback(() => {
@@ -410,7 +346,7 @@ export function WorkArea() {
         if (blob) {
           fileSave(blob, {
             fileName: makeOutputFilename({
-              aspectRatio,
+              aspectRatio: aspectRatio.value,
               originalNames: filenames,
             }),
           });
@@ -419,7 +355,7 @@ export function WorkArea() {
       "image/jpeg",
       0.75
     );
-  }, [aspectRatio, filenames]);
+  }, []);
 
   const getFileToShare = useCallback(() => {
     const imageType = "image/jpeg";
@@ -433,7 +369,10 @@ export function WorkArea() {
 
           const file = new File(
             [blob],
-            makeOutputFilename({ aspectRatio, originalNames: filenames }),
+            makeOutputFilename({
+              aspectRatio: aspectRatio.value,
+              originalNames: filenames,
+            }),
             { type: imageType }
           );
           resolve(file);
@@ -442,7 +381,7 @@ export function WorkArea() {
         0.75
       );
     });
-  }, [aspectRatio, filenames]);
+  }, [filenames]);
 
   return (
     <div className="WorkArea">
@@ -460,7 +399,7 @@ export function WorkArea() {
                       id={`${ID.aspectRatioInput}-${ar.id}`}
                       value={ar.id}
                       onChange={changeAspectRatio}
-                      defaultChecked={aspectRatio.id === ar.id}
+                      defaultChecked={aspectRatio.value.id === ar.id}
                     />
                     <label htmlFor={`${ID.aspectRatioInput}-${ar.id}`}>
                       {ar.label}
@@ -484,7 +423,7 @@ export function WorkArea() {
                       id={`${ID.splitTypeInput}-${split.value}`}
                       value={split.value}
                       onChange={changeSplitType}
-                      defaultChecked={splitType === split.value}
+                      defaultChecked={splitType.value === split.value}
                     />
                     <label htmlFor={`${ID.splitTypeInput}-${split.value}`}>
                       {split.label}
@@ -510,10 +449,10 @@ export function WorkArea() {
         <div className="CanvasWrapper">
           <canvas className="PreviewCanvas" ref={canvasDestRef}></canvas>
           {/* Consolidated loading indicator on top of the canvas */}
-          {processingState === "processing" && (
+          {processingState.value === "processing" && (
             <div className="LoadingIndicator">Loading...</div>
           )}
-          {processingState === "error" && (
+          {processingState.value === "error" && (
             <div className="ErrorIndicator">
               <p>
                 Something went wrong when resizing the image. Please try again
@@ -531,7 +470,7 @@ export function WorkArea() {
             id={ID.bgColorInput}
             name="bgColor"
             onChange={changeBgColorFromString}
-            value={bgColorHex}
+            value={colorHex.value}
           ></input>
           <ExpandableArea label="Custom colors">
             <ErrorBoundary
@@ -541,7 +480,7 @@ export function WorkArea() {
             >
               <Suspense>
                 <LazyCustomColorPicker
-                  color={bgColor}
+                  color={bgColor.value}
                   onChange={changeBgColor}
                 />
               </Suspense>
@@ -555,7 +494,7 @@ export function WorkArea() {
       </div>
     </div>
   );
-}
+});
 
 function ShareArea({
   getFileToShare,

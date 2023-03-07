@@ -20,6 +20,8 @@ specifiers:
   react: ^18.2.0
   react-dom: ^18.2.0
   react-error-boundary: ^3.1.4
+  signia: ^0.0.9
+  signia-react: ^0.0.9
   typescript: ^4.9.5
   unionize: ^3.1.0
   user-agent-data-types: ^0.3.1
@@ -44,6 +46,8 @@ dependencies:
   react: 18.2.0
   react-dom: 18.2.0_react@18.2.0
   react-error-boundary: 3.1.4_react@18.2.0
+  signia: 0.0.9
+  signia-react: 0.0.9_react@18.2.0
   typescript: 4.9.5
   unionize: 3.1.0
   web-vitals: 2.1.4
@@ -3928,6 +3932,19 @@ packages:
     resolution: {integrity: sha512-wpoSFAxys6b2a2wHZ1XpDSgD7N9iVjg29Ph9uV/uaP9Ex/KXlkTZTeddxDPSYQpgvzKLGJke2UU0AzoGCjNIvQ==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /signia-react/0.0.9_react@18.2.0:
+    resolution: {integrity: sha512-/5DSvId6gveVjiJTH1tgXBxOXe9VsEbyk8Eb+0GufLBP5sfmThXlQI+lFe5NwP05BJ651gurb3/falxt2yMaGA==}
+    peerDependencies:
+      react: ^18
+    dependencies:
+      react: 18.2.0
+      signia: 0.0.9
+    dev: false
+
+  /signia/0.0.9:
+    resolution: {integrity: sha512-jR6+uCEkAEmnGccWL3SoEO5pvK7baGnF8oidn0Bg5uXefcnDycjOA6i5QofrzQNrWFZ8R0ayZsavHv9hpr+oYA==}
+    dev: false
 
   /slash/2.0.0:
     resolution: {integrity: sha512-ZYKh3Wh2z1PpEXWr0MpSBZ0V6mZHAQfYevttO11c51CaWjGTaadiKZ+wVt1PbMlDV5qhMFslpZCemhwOK7C89A==}

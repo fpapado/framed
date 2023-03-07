@@ -42,7 +42,7 @@ export function drawImageWithBackground({
     let dx = (aspectRatio.width - canvasSrc.width) / 2;
     let dy = (aspectRatio.height - canvasSrc.height) / 2;
 
-    if (process.env.NODE_ENV !== "production") {
+    if (import.meta.env.DEV) {
       console.table({
         dx,
         dy,
@@ -110,7 +110,7 @@ export function drawDiptychWithBackground({
       dy = aspectRatio.height / 2 - canvasSrc1.height - gap * (3 / 16);
     }
 
-    if (process.env.NODE_ENV !== "production") {
+    if (import.meta.env.DEV) {
       console.table({
         dx,
         dy,
@@ -139,7 +139,7 @@ export function drawDiptychWithBackground({
       dy = aspectRatio.height / 2 + gap * (3 / 16);
     }
 
-    if (process.env.NODE_ENV !== "production") {
+    if (import.meta.env.DEV) {
       console.table({
         dx,
         dy,

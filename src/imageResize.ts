@@ -23,11 +23,7 @@ imageReducer._calculate_size = function (env: any) {
   );
 
   // Leave image as-is, if we do not allow upscaling
-  if (
-    process.env.NODE_ENV !== "production" &&
-    !env.opts.allowUpscale &&
-    scale_factor > 1
-  ) {
+  if (import.meta.env.DEV && !env.opts.allowUpscale && scale_factor > 1) {
     console.warn(
       "The image is smaller than the resize dimensions; will *not* upscale."
     );
@@ -35,11 +31,7 @@ imageReducer._calculate_size = function (env: any) {
   }
 
   // Warn if we allow upscaling, and image will be upscaled
-  if (
-    process.env.NODE_ENV !== "production" &&
-    env.opts.allowUpscale &&
-    scale_factor > 1
-  ) {
+  if (import.meta.env.DEV && env.opts.allowUpscale && scale_factor > 1) {
     console.warn(
       "The image is smaller than the resize dimensions; will upscale."
     );

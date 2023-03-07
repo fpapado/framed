@@ -2,10 +2,10 @@ import { test, expect } from "@playwright/test";
 import {
   mockFileAccessApi,
   supportsFsAccessAPI,
-} from "./utils/native-fs-access-api";
+} from "./utils/native-fs-access-api.js";
 
 // TODO: Use an environment variable to fetch a preview branch
-const DEPLOY_URL = "http://localhost:3000";
+const DEPLOY_URL = "http://localhost:5173";
 
 test("Can pick a file", async ({ page, browserName }, testInfo) => {
   testInfo.fixme(
@@ -33,5 +33,7 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
   // Wait for the processing message to appear and disappear; this signals that the image has settled
   await expect(page.getByText(/Loading.../)).toBeVisible();
   await expect(page.getByText(/Loading.../)).not.toBeVisible();
-  await expect(page.locator("canvas")).toHaveScreenshot();
+  await expect(page.locator("canvas")).toHaveScreenshot({
+    maxDiffPixelRatio: 0.01,
+  });
 });

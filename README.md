@@ -1,46 +1,67 @@
-# Getting Started with Create React App
+# Framed
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> Pictures in frames, quickly and locally in your browser.
+
+## Prerequisites
+
+You will need [node](https://nodejs.org/en/) and [pnpm](https://pnpm.io/installation#using-corepack).
+
+We recommend using [nvm](https://github.com/nvm-sh/nvm) to manage your node version.
+
+Start by installing nvm, then in a terminal, such as iTerm, Gnome Terminal, or Windows Subsystem for Linux, type:
+
+```shell
+nvm use
+```
+
+This should install the correct version of node for your system.
+
+Then, follow the instructions for [installing pnpm, preferably using corepack](https://pnpm.io/installation#using-corepack).
+
+## Install dependencies
+
+Assuming that you have set up node, pnpm and nvm, in a terminal run:
+
+```shell
+pnpm i
+```
+
+You should be ready to go!
 
 ## Available Scripts
 
 In the project directory, you can run:
 
-### `npm start`
+### `pnpm start`
 
 Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
 
 The page will reload if you make edits.\
 You will also see any lint errors in the console.
 
-### `npm test`
+### `pnpm test`
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Launches the test runner, specifically [Playwright](playwright.dev/).
+Playwright is used for end-to-end testing, using the real browser environment.
 
-### `npm run build`
+### `pnpm run build`
 
-Builds the app for production to the `build` folder.\
+Builds the app for production to the `dist` folder.\
 It correctly bundles React in production mode and optimizes the build for the best performance.
+The build is minified and the filenames include the hashes.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### `pnpm run preview`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Builds the app for production (similar to `pnpm run build`), and launches a local server that serves the app in production mode.
 
-### `npm run eject`
+`pnpm run preview` is useful for benchmarking performance issues, since all optimisations are applied.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### `pnpm run lint`
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Runs ESLint, surfacing errors and warnings in the project.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Deployment
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+The production app is on [Netlify](netlify.com/).
+You can deploy the app anywhere that serves static files, i.e. those under the `dist` directory.

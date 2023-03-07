@@ -195,7 +195,6 @@ export class Canvas {
     return react(
       "drawOnCanvas",
       async () => {
-        whyAmIRunning();
         // NOTE: We must destructure this before the await point, to ensure that the dependency is tracked correctly
         const colorHexValue = this.colorHex;
         const canvases = await this.resizedCanvases;

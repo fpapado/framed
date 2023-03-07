@@ -98,17 +98,26 @@ const colorHex = computed("colorHex", () => {
   return bgColor.value.toString("hex");
 });
 
-const resizedCanvases = computed("canvasDest", async () => {
+react("colorLog", () => {
+  console.log({ colorHex: colorHex.value });
+});
+
+const resizedCanvases = computed("resizedCanvases", async () => {
   try {
-    processingState.set("processing");
+    console.log(blob.value, blob2.value);
+    if (!blob.value && !blob2.value) {
+      return;
+    }
+
+    // processingState.set("processing");
 
     const isDiptych = blob.value && blob2.value;
 
     // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
     // TODO: implement cancelation
     const [resizedCanvas1, resizedCanvas2] = await Promise.all(
-      [blob, blob2].filter(Boolean).map((blob) =>
-        resizeToCanvas(blob.value!, {
+      [blob.value, blob2.value].filter(Boolean).map((blob) =>
+        resizeToCanvas(blob!, {
           maxWidth: isDiptych
             ? splitType.value === "horizontal"
               ? (aspectRatio.value.width - OPTIONS.border) / 2
@@ -124,24 +133,39 @@ const resizedCanvases = computed("canvasDest", async () => {
       )
     );
 
-    processingState.set("inert");
+    // processingState.set("inert");
     return [resizedCanvas1, resizedCanvas2] as const;
   } catch (err) {
     // Ignore error if it is a cancelation error; this is expected
     if (err instanceof DOMException && err.name === "AbortError") {
       return;
     }
-    console.error("Unaccounted error: ", err);
-    processingState.set("error");
+    console.error(new Error("Unaccounted error when resizing", { cause: err }));
+    console.error(err);
+    // processingState.set("error");
   }
 });
 
 const drawOnCanvas = (canvasDest: HTMLCanvasElement) => {
-  react("drawOnCanvas", async () => {
+  // TODO: Batch these on animation frames or something similar (so that changing the colour does not keep firing)
+  // TODO: Some incremental approach to resizedCanvases
+  // TODO: Support cancelation
+  return react("drawOnCanvas", async () => {
+    console.log("drawOnCanvas called");
+    // NOTE: We must destructure this before the await point, to ensure that the dependency is tracked correctly
+    const { value: colorHexValue } = colorHex;
     const canvases = await resizedCanvases.value;
     if (!canvases) {
+      // Without images, just draw the bgColor
+      drawImageWithBackground({
+        canvasSrc: null,
+        canvasDest: canvasDest,
+        aspectRatio: aspectRatio.value,
+        bgColor: colorHexValue,
+      });
       return;
     }
+
     const [resizedCanvas1, resizedCanvas2] = canvases;
     const isDiptych = resizedCanvas1 && resizedCanvas2;
 
@@ -155,7 +179,7 @@ const drawOnCanvas = (canvasDest: HTMLCanvasElement) => {
         canvasDest: canvasDest,
         gap: OPTIONS.border,
         aspectRatio: aspectRatio.value,
-        bgColor: bgColor.value.toString("hex"),
+        bgColor: colorHexValue,
         split: splitType.value,
       });
     } else {
@@ -164,25 +188,15 @@ const drawOnCanvas = (canvasDest: HTMLCanvasElement) => {
         canvasSrc: resizedCanvas1 ?? resizedCanvas2,
         canvasDest: canvasDest,
         aspectRatio: aspectRatio.value,
-        bgColor: bgColor.value.toString("hex"),
+        bgColor: colorHexValue,
       });
     }
   });
 };
 
 export const WorkArea = track(function WorkArea() {
-  // A reference to the file the user picked; picking a file does not cause rendering by itself, but actions that change it
-  // will typically also redraw on the canvas
-  const originalFileRef = useRef<Blob>();
-  const originalFile2Ref = useRef<Blob>();
-
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
-
-  // State/options based on user selections
-  const changeBgColor = bgColor.set;
-  const setAspectRatio = aspectRatio.set;
-  const setSplitType = splitType.set;
 
   // TODO: This could be a ref, since it doesn't affect rendering per se
   const [filenames, setFilenames] = useState<string[]>();
@@ -196,10 +210,10 @@ export const WorkArea = track(function WorkArea() {
     filePickerDescription: `${id}-filePickerDescription`,
   };
 
-  // Processing state for async operations
-  const setProcessingState = processingState.set;
-
-  useEffect(() => drawOnCanvas(canvasDestRef.current!), []);
+  useEffect(() => {
+    console.log("Dest ref", canvasDestRef.current);
+    return drawOnCanvas(canvasDestRef.current!);
+  }, []);
 
   /** Effect to listen for the share target and receive an image file
    * TODO: Support two/multiple shared images in the target
@@ -270,21 +284,21 @@ export const WorkArea = track(function WorkArea() {
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       try {
         const newColor = parseColor(ev.target.value).toFormat("hsb");
-        changeBgColor(newColor);
+        bgColor.set(newColor);
       } catch (err) {
         // Ignore parse errors, but don't set the colour
       }
     },
-    [changeBgColor]
+    []
   );
 
   const changeSplitType = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       const newSplitType = ev.target.value as Split;
 
-      setSplitType(newSplitType);
+      splitType.set(newSplitType);
     },
-    [setSplitType]
+    []
   );
 
   const changeAspectRatio = useCallback(
@@ -296,49 +310,46 @@ export const WorkArea = track(function WorkArea() {
         return;
       }
 
-      setAspectRatio(newAspectRatio);
+      aspectRatio.set(newAspectRatio);
     },
-    [setAspectRatio]
+    []
   );
 
-  const selectFiles = useCallback(
-    async (files: FileWithHandle[]) => {
-      // Nothing to do if no files were selected
-      if (!files[0]) {
-        return;
-      }
+  const selectFiles = useCallback(async (files: FileWithHandle[]) => {
+    // Nothing to do if no files were selected
+    if (!files[0]) {
+      return;
+    }
 
-      // Set the filenames for future reference
-      setFilenames([files[0].name, files[1]?.name].filter(Boolean));
+    // Set the filenames for future reference
+    setFilenames([files[0].name, files[1]?.name].filter(Boolean));
 
-      // When the user selects files, we:
-      //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
-      //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
-      //   2) Store those first-pass results to refs, for future resizing (e.g. changing aspect ratio)
-      // Cancel existing tasks and start a new one
-      setProcessingState("processing");
+    // When the user selects files, we:
+    //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
+    //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
+    //   2) Store those first-pass results to refs, for future resizing (e.g. changing aspect ratio)
+    // Cancel existing tasks and start a new one
+    processingState.set("processing");
 
-      const [resizedBlob1, resizedBlob2] = await Promise.all(
-        [files[0], files[1]].filter(Boolean).map((file) =>
-          resizeToBlob(file, {
-            maxWidth: 2000,
-            maxHeight: 2000,
-            allowUpscale: true,
-          })
-        )
-      );
+    const [resizedBlob1, resizedBlob2] = await Promise.all(
+      [files[0], files[1]].filter(Boolean).map((file) =>
+        resizeToBlob(file, {
+          maxWidth: 2000,
+          maxHeight: 2000,
+          allowUpscale: true,
+        })
+      )
+    );
 
-      setProcessingState("inert");
+    processingState.set("inert");
 
-      // Update canvas data, and redraw
-      blob.set(resizedBlob1);
+    // Update canvas data, and redraw
+    blob.set(resizedBlob1);
 
-      // If a second image exists, set it.
-      // Otherwise, reset the ref, in case the user wants to override a diptych with a single image.
-      blob2.set(resizedBlob2 ?? undefined);
-    },
-    [setProcessingState]
-  );
+    // If a second image exists, set it.
+    // Otherwise, reset the ref, in case the user wants to override a diptych with a single image.
+    blob2.set(resizedBlob2 ?? undefined);
+  }, []);
 
   const saveFile = useCallback(() => {
     canvasDestRef.current?.toBlob(
@@ -481,7 +492,7 @@ export const WorkArea = track(function WorkArea() {
               <Suspense>
                 <LazyCustomColorPicker
                   color={bgColor.value}
-                  onChange={changeBgColor}
+                  onChange={(color) => bgColor.set(color)}
                 />
               </Suspense>
             </ErrorBoundary>

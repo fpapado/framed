@@ -38,6 +38,7 @@ import { ArrowDown } from "./icons/ArrowDown";
 import { resizeToBlob, resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./serviceWorker/swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
+import { transact, transaction } from "signia";
 
 const LazyCustomColorPicker = lazy(() =>
   import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
@@ -52,9 +53,7 @@ export const WorkArea = track(function WorkArea() {
 
   // Destination canvas; the one that we manipulate on-screen
   const canvasDestRef = useRef<HTMLCanvasElement>(null);
-
-  // TODO: This could be a ref, since it doesn't affect rendering per se
-  const [filenames, setFilenames] = useState<string[]>();
+  const filenames = useRef<string[] | undefined>();
 
   // Ids and stuff
   const id = useId();
@@ -66,7 +65,6 @@ export const WorkArea = track(function WorkArea() {
   };
 
   useEffect(() => {
-    console.log("Dest ref", canvasDestRef.current);
     return canvas.drawOnCanvas(canvasDestRef.current!);
   }, []);
 
@@ -176,12 +174,12 @@ export const WorkArea = track(function WorkArea() {
     }
 
     // Set the filenames for future reference
-    setFilenames([files[0].name, files[1]?.name].filter(Boolean));
+    filenames.current = [files[0].name, files[1]?.name].filter(Boolean);
 
     // When the user selects files, we:
     //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
     //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
-    //   2) Store those first-pass results to to the canvas blob, for future resizing (e.g. changing aspect ratio)
+    //   2) Store those first-pass results to to the Canvas state, for future resizing (e.g. changing aspect ratio)
     // Cancel existing tasks and start a new one
     processingState.set("processing");
 
@@ -197,12 +195,14 @@ export const WorkArea = track(function WorkArea() {
 
     processingState.set("inert");
 
-    // Update canvas data, and redraw
-    canvas.setBlob(resizedBlob1);
+    // Update canvas data; we use a transaction to ensure that the effects are batched
+    transaction(() => {
+      canvas.setBlob(resizedBlob1);
 
-    // If a second image exists, set it.
-    // Otherwise, reset the ref, in case the user wants to override a diptych with a single image.
-    canvas.setBlob2(resizedBlob2 ?? null);
+      // If a second image exists, set it as well
+      // Otherwise, reset to null, in case the user wants to override a diptych with a single image.
+      canvas.setBlob2(resizedBlob2 ?? null);
+    });
   }, []);
 
   const saveFile = useCallback(() => {
@@ -212,7 +212,7 @@ export const WorkArea = track(function WorkArea() {
           fileSave(blob, {
             fileName: makeOutputFilename({
               aspectRatio: canvas.aspectRatio,
-              originalNames: filenames,
+              originalNames: filenames.current,
             }),
           });
         }
@@ -236,7 +236,7 @@ export const WorkArea = track(function WorkArea() {
             [blob],
             makeOutputFilename({
               aspectRatio: canvas.aspectRatio,
-              originalNames: filenames,
+              originalNames: filenames.current,
             }),
             { type: imageType }
           );

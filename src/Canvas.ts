@@ -1,5 +1,5 @@
 import { Color, parseColor } from "@react-stately/color";
-import { atom, computed, react } from "signia";
+import { atom, computed, react, whyAmIRunning } from "signia";
 import {
   AspectRatio,
   AspectRatioId,
@@ -97,6 +97,14 @@ export class Canvas {
     return this.state.splitType;
   }
 
+  @computed private get blob() {
+    return this.state.blob;
+  }
+
+  @computed private get blob2() {
+    return this.state.blob2;
+  }
+
   setBgColor(bgColor: Color) {
     this._state.update((state) => ({
       ...state,
@@ -136,7 +144,10 @@ export class Canvas {
   private get resizedCanvases() {
     return (async () => {
       try {
-        const { blob, blob2 } = this.state;
+        // NOTE: We use these directly instead of destructuring from state, to ensure we do not re-compute on unrelated changes
+        const blob = this.blob;
+        const blob2 = this.blob2;
+
         if (!blob && !blob2) {
           return;
         }
@@ -145,7 +156,6 @@ export class Canvas {
         const isDiptych = blob && blob2;
 
         // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
-        // TODO: implement cancelation
         const [resizedCanvas1, resizedCanvas2] = await Promise.all(
           [blob, blob2].filter(Boolean).map((blob) =>
             resizeToCanvas(blob!, {
@@ -180,13 +190,11 @@ export class Canvas {
   }
 
   drawOnCanvas(canvasDest: HTMLCanvasElement) {
-    // TODO: Batch these on animation frames or something similar (so that changing the colour does not keep firing)
     // TODO: Some incremental approach to resizedCanvases
-    // TODO: Support cancelation
     return react(
       "drawOnCanvas",
       async () => {
-        console.log("drawOnCanvas called");
+        whyAmIRunning();
         // NOTE: We must destructure this before the await point, to ensure that the dependency is tracked correctly
         const colorHexValue = this.colorHex;
         const canvases = await this.resizedCanvases;
@@ -228,6 +236,7 @@ export class Canvas {
           });
         }
       },
+      // Batch based on animation frames, since this effect can fire multiple times (e.g. when changing colours quickly)
       { scheduleEffect }
     );
   }

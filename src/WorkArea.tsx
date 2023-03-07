@@ -38,7 +38,7 @@ import { ArrowDown } from "./icons/ArrowDown";
 import { resizeToBlob, resizeToCanvas } from "./imageResize";
 import { getSharedImage } from "./serviceWorker/swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
-import { transact, transaction } from "signia";
+import { getComputedInstance, transact, transaction } from "signia";
 
 const LazyCustomColorPicker = lazy(() =>
   import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
@@ -64,50 +64,10 @@ export const WorkArea = track(function WorkArea() {
     filePickerDescription: `${id}-filePickerDescription`,
   };
 
+  // The main effect; drawing on the destination canvas when the internal effect graph changes
   useEffect(() => {
     return canvas.drawOnCanvas(canvasDestRef.current!);
   }, []);
-
-  /** Effect to listen for the share target and receive an image file
-   * TODO: Support two/multiple shared images in the target
-   */
-  // useEffect(() => {
-  //   /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
-  //   let hasCleanedUp = false;
-  //   const awaitingShareTarget = new URL(window.location.href).searchParams.has(
-  //     "share-target"
-  //   );
-
-  //   if (!awaitingShareTarget) {
-  //     return;
-  //   }
-
-  //   console.info("Awaiting share target");
-
-  //   async function effectInner() {
-  //     setProcessingState("processing");
-  //     const file = await getSharedImage();
-
-  //     if (hasCleanedUp) return;
-
-  //     // Remove the ?share-target from the URL
-  //     window.history.replaceState("", "", "/");
-
-  //     await updateCanvas({
-  //       blob: file,
-  //       aspectRatio: initialAspectRatio,
-  //       bgColor: parseColor(initialBgColor.toString("hex")),
-  //       splitType: initialSplitType,
-  //     });
-  //   }
-
-  //   effectInner();
-
-  //   return () => {
-  //     hasCleanedUp = true;
-  //     setProcessingState("inert");
-  //   };
-  // }, [updateCanvas]);
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -131,6 +91,41 @@ export const WorkArea = track(function WorkArea() {
       initialAspectRatio.width,
       initialAspectRatio.height
     );
+  }, []);
+
+  /** Effect to listen for the share target and receive an image file
+   * TODO: Support two/multiple shared images in the target
+   */
+  useEffect(() => {
+    /* Flag to cancel the effect if it is no longer relevant (i.e. if cleanup was invoked) */
+    let hasCleanedUp = false;
+    const awaitingShareTarget = new URL(window.location.href).searchParams.has(
+      "share-target"
+    );
+
+    if (!awaitingShareTarget) {
+      return;
+    }
+
+    console.info("Awaiting share target");
+
+    async function effectInner() {
+      processingState.set("processing");
+      const file = await getSharedImage();
+
+      if (hasCleanedUp) return;
+
+      // Remove the ?share-target from the URL
+      window.history.replaceState("", "", "/");
+      canvas.setBlob(file);
+    }
+
+    effectInner();
+
+    return () => {
+      hasCleanedUp = true;
+      processingState.set("inert");
+    };
   }, []);
 
   const changeBgColorFromString = useCallback(
@@ -180,7 +175,7 @@ export const WorkArea = track(function WorkArea() {
     //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
     //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
     //   2) Store those first-pass results to to the Canvas state, for future resizing (e.g. changing aspect ratio)
-    // Cancel existing tasks and start a new one
+    // TODO: Consider doing this step inside of Canvas, e.g. with a secondary computed value
     processingState.set("processing");
 
     const [resizedBlob1, resizedBlob2] = await Promise.all(

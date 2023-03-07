@@ -25,8 +25,7 @@ export function FilePicker<M extends boolean>({
         mimeTypes: ["image/*"],
         multiple,
       });
-      // The types line up, but couldn't get them to pass internally
-      // @ts-expect-error
+      // @ts-expect-error The types line up, but couldn't get them to pass internally
       onChange(res);
     } catch (err) {
       // Ignore DOMException; those are thrown when the user does not select a file

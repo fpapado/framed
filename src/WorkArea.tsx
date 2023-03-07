@@ -1,4 +1,4 @@
-import { track, useAtom, useComputed } from "signia-react";
+import { track, useAtom } from "signia-react";
 
 import {
   ASPECT_RATIOS,
@@ -24,21 +24,15 @@ import React, {
 import { m } from "framer-motion";
 import { ErrorBoundary } from "react-error-boundary";
 
-import {
-  AspectRatio,
-  AspectRatioId,
-  drawDiptychWithBackground,
-  drawImageWithBackground,
-  Split,
-} from "./drawing";
+import { AspectRatio, AspectRatioId, Split } from "./drawing";
 import { FilePicker } from "./FilePicker";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { ArrowDown } from "./icons/ArrowDown";
-import { resizeToBlob, resizeToCanvas } from "./imageResize";
+import { resizeToBlob } from "./imageResize";
 import { getSharedImage } from "./serviceWorker/swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
-import { getComputedInstance, transact, transaction } from "signia";
+import { transaction } from "signia";
 
 const LazyCustomColorPicker = lazy(() =>
   import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
@@ -66,8 +60,12 @@ export const WorkArea = track(function WorkArea() {
 
   // The main effect; drawing on the destination canvas when the internal effect graph changes
   useEffect(() => {
-    return canvas.drawOnCanvas(canvasDestRef.current!);
-  }, []);
+    if (!canvasDestRef.current) {
+      console.error("No destination canvas found!");
+      return;
+    }
+    return canvas.drawOnCanvas(canvasDestRef.current);
+  }, [canvas]);
 
   // Set the width/height of the canvas with the initial aspect ratio
   useEffect(() => {
@@ -126,7 +124,7 @@ export const WorkArea = track(function WorkArea() {
       hasCleanedUp = true;
       processingState.set("inert");
     };
-  }, []);
+  }, [canvas, processingState]);
 
   const changeBgColorFromString = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
@@ -137,7 +135,7 @@ export const WorkArea = track(function WorkArea() {
         // Ignore parse errors, but don't set the colour
       }
     },
-    []
+    [canvas]
   );
 
   const changeSplitType = useCallback(
@@ -145,7 +143,7 @@ export const WorkArea = track(function WorkArea() {
       const newSplitType = ev.target.value as Split;
       canvas.setSplitType(newSplitType);
     },
-    []
+    [canvas]
   );
 
   const changeAspectRatio = useCallback(
@@ -159,46 +157,49 @@ export const WorkArea = track(function WorkArea() {
 
       canvas.setAspectRatio(newAspectRatio);
     },
-    []
+    [canvas]
   );
 
-  const selectFiles = useCallback(async (files: FileWithHandle[]) => {
-    // Nothing to do if no files were selected
-    if (!files[0]) {
-      return;
-    }
+  const selectFiles = useCallback(
+    async (files: FileWithHandle[]) => {
+      // Nothing to do if no files were selected
+      if (!files[0]) {
+        return;
+      }
 
-    // Set the filenames for future reference
-    filenames.current = [files[0].name, files[1]?.name].filter(Boolean);
+      // Set the filenames for future reference
+      filenames.current = [files[0].name, files[1]?.name].filter(Boolean);
 
-    // When the user selects files, we:
-    //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
-    //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
-    //   2) Store those first-pass results to to the Canvas state, for future resizing (e.g. changing aspect ratio)
-    // TODO: Consider doing this step inside of Canvas, e.g. with a secondary computed value
-    processingState.set("processing");
+      // When the user selects files, we:
+      //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
+      //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
+      //   2) Store those first-pass results to to the Canvas state, for future resizing (e.g. changing aspect ratio)
+      // TODO: Consider doing this step inside of Canvas, e.g. with a secondary computed value
+      processingState.set("processing");
 
-    const [resizedBlob1, resizedBlob2] = await Promise.all(
-      [files[0], files[1]].filter(Boolean).map((file) =>
-        resizeToBlob(file, {
-          maxWidth: 2000,
-          maxHeight: 2000,
-          allowUpscale: true,
-        })
-      )
-    );
+      const [resizedBlob1, resizedBlob2] = await Promise.all(
+        [files[0], files[1]].filter(Boolean).map((file) =>
+          resizeToBlob(file, {
+            maxWidth: 2000,
+            maxHeight: 2000,
+            allowUpscale: true,
+          })
+        )
+      );
 
-    processingState.set("inert");
+      processingState.set("inert");
 
-    // Update canvas data; we use a transaction to ensure that the effects are batched
-    transaction(() => {
-      canvas.setBlob(resizedBlob1);
+      // Update canvas data; we use a transaction to ensure that the effects are batched
+      transaction(() => {
+        canvas.setBlob(resizedBlob1);
 
-      // If a second image exists, set it as well
-      // Otherwise, reset to null, in case the user wants to override a diptych with a single image.
-      canvas.setBlob2(resizedBlob2 ?? null);
-    });
-  }, []);
+        // If a second image exists, set it as well
+        // Otherwise, reset to null, in case the user wants to override a diptych with a single image.
+        canvas.setBlob2(resizedBlob2 ?? null);
+      });
+    },
+    [canvas, processingState]
+  );
 
   const saveFile = useCallback(() => {
     canvasDestRef.current?.toBlob(
@@ -215,7 +216,7 @@ export const WorkArea = track(function WorkArea() {
       "image/jpeg",
       0.75
     );
-  }, []);
+  }, [canvas.aspectRatio]);
 
   const getFileToShare = useCallback(() => {
     const imageType = "image/jpeg";
@@ -241,7 +242,7 @@ export const WorkArea = track(function WorkArea() {
         0.75
       );
     });
-  }, [filenames]);
+  }, [canvas.aspectRatio]);
 
   return (
     <div className="WorkArea">
@@ -448,7 +449,7 @@ function makeOutputFilename({
   originalNames?: string[];
 }) {
   const joinedNames = originalNames?.join("-");
-  const isDiptych = originalNames?.length! > 1 ?? false;
+  const isDiptych = Array.isArray(originalNames) && originalNames.length > 1;
   return [
     "framed",
     isDiptych && "diptych",

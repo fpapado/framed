@@ -128,7 +128,7 @@ function nextMessage(dataVal: string): Promise<void> {
     if (!nextMessageResolveMap.has(dataVal)) {
       nextMessageResolveMap.set(dataVal, []);
     }
-    nextMessageResolveMap.get(dataVal)!.push(resolve);
+    nextMessageResolveMap.get(dataVal)?.push(resolve);
   });
 }
 

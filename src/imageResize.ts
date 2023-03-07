@@ -1,9 +1,45 @@
-// @ts-ignore
-import ImageBlobReduce from "image-blob-reduce";
+import ImageBlobReduce, {
+  type ResizeOptions,
+  type Env,
+} from "image-blob-reduce";
 
-const imageReducer = new ImageBlobReduce();
+interface ImageBlobReduceWithOverride extends ImageBlobReduce.ImageBlobReduce {
+  /** Can be overriden by client code, to customise
+   * @see https://github.com/nodeca/image-blob-reduce#customization
+   */
+  _calculate_size: (env: EnvWithOverride) => Promise<Env>;
+  toBlob(blob: Blob, options?: ResizeOptionsWithOverride): Promise<Blob>;
+  toCanvas(
+    blob: Blob,
+    options?: ResizeOptionsWithOverride
+  ): Promise<HTMLCanvasElement>;
+}
 
-imageReducer._calculate_size = function (env: any) {
+interface EnvWithOverride extends Env {
+  /**
+   * EXIF orientaiton
+   * @see https://sirv.com/help/articles/rotate-photos-to-be-upright/
+   */
+  orientation: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
+  opts: ResizeOptionsWithOverride;
+}
+
+interface ResizeOptionsWithOverride extends ResizeOptions {
+  /**
+   * max width to scale within; provided by the caller
+   */
+  maxWidth: number;
+  /**
+   * max height to scale within; provided by the caller
+   */
+  maxHeight: number;
+  /** Whether to allow images to be upscaled */
+  allowUpscale?: boolean;
+}
+
+const imageReducer = new ImageBlobReduce() as ImageBlobReduceWithOverride;
+
+imageReducer._calculate_size = function (env) {
   // Override with a "fit maximally" function
   let scale_factor;
 

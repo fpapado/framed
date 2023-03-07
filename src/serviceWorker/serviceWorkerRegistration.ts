@@ -56,7 +56,7 @@ export function register(config?: Config): Workbox | undefined {
 }
 
 function registerValidSW(workbox: Workbox, config?: Config) {
-  workbox.addEventListener("waiting", (ev) => {
+  workbox.addEventListener("waiting", () => {
     // At this point, the updated precached content has been fetched,
     // but the previous service worker will still serve the older
     // content until all client tabs are closed.
@@ -78,7 +78,7 @@ function registerValidSW(workbox: Workbox, config?: Config) {
 
   workbox
     .register()
-    .then((registration) => {})
+    .then(() => {})
     .catch((error) => {
       console.error("Error during service worker registration:", error);
     });

@@ -158,6 +158,7 @@ export class Canvas {
         // Resize images, if new ones are specified (e.g. picked new image, or aspect ratio changed)
         const [resizedCanvas1, resizedCanvas2] = await Promise.all(
           [blob, blob2].filter(Boolean).map((blob) =>
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- At least one blob is present, so the blob here is defined too
             resizeToCanvas(blob!, {
               maxWidth: isDiptych
                 ? this.splitType === "horizontal"

@@ -39,8 +39,8 @@ export function drawImageWithBackground({
 
   // Then, draw scaled image, if specified
   if (canvasSrc) {
-    let dx = (aspectRatio.width - canvasSrc.width) / 2;
-    let dy = (aspectRatio.height - canvasSrc.height) / 2;
+    const dx = (aspectRatio.width - canvasSrc.width) / 2;
+    const dy = (aspectRatio.height - canvasSrc.height) / 2;
 
     if (import.meta.env.DEV) {
       console.table({

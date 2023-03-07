@@ -68,7 +68,7 @@ export function changeHtmlPreference(pref: Preference) {
     const el = document.createElement("meta");
     el.name = "theme-color";
     el.content = content;
-    if (!!media) {
+    if (media) {
       el.media = media;
     }
     document.head.append(el);

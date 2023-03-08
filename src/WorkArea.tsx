@@ -29,16 +29,14 @@ import { FilePicker } from "./FilePicker";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { ArrowDown } from "./icons/ArrowDown";
-import { resizeToBlob } from "./imageResize";
 import { getSharedImage } from "./serviceWorker/swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
-import { transaction } from "signia";
 
 const LazyCustomColorPicker = lazy(() =>
   import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
 );
 
-export const SUPPORTS_SHARE = Boolean(navigator.share);
+const SUPPORTS_SHARE = Boolean(navigator.share);
 type SharingState = "inert" | "sharing" | "error" | "success";
 
 export const WorkArea = track(function WorkArea() {
@@ -115,7 +113,7 @@ export const WorkArea = track(function WorkArea() {
 
       // Remove the ?share-target from the URL
       window.history.replaceState("", "", "/");
-      canvas.setBlob(file);
+      canvas.setBlobs(file);
     }
 
     effectInner();
@@ -170,33 +168,11 @@ export const WorkArea = track(function WorkArea() {
       // Set the filenames for future reference
       filenames.current = [files[0].name, files[1]?.name].filter(Boolean);
 
-      // When the user selects files, we:
-      //   1) Run a first-pass downsizing (if needed) to a 2000 pixel fit.
-      //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
-      //   2) Store those first-pass results to to the Canvas state, for future resizing (e.g. changing aspect ratio)
-      // TODO: Consider doing this step inside of Canvas, e.g. with a secondary computed value
       processingState.set("processing");
 
-      const [resizedBlob1, resizedBlob2] = await Promise.all(
-        [files[0], files[1]].filter(Boolean).map((file) =>
-          resizeToBlob(file, {
-            maxWidth: 2000,
-            maxHeight: 2000,
-            allowUpscale: true,
-          })
-        )
-      );
+      await canvas.setBlobs(files[0], files[1]);
 
       processingState.set("inert");
-
-      // Update canvas data; we use a transaction to ensure that the effects are batched
-      transaction(() => {
-        canvas.setBlob(resizedBlob1);
-
-        // If a second image exists, set it as well
-        // Otherwise, reset to null, in case the user wants to override a diptych with a single image.
-        canvas.setBlob2(resizedBlob2 ?? null);
-      });
     },
     [canvas, processingState]
   );

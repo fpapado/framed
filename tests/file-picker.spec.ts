@@ -31,6 +31,10 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
   await page.getByRole("button", { name: "Pick image(s)" }).click();
 
   // Wait for the processing message to appear and disappear; this signals that the image has settled
+  // FIXME: This test can be flaky.
+  // The loading message appears for the first-pass resize, which is typically the most time-consuming.
+  // The second resize/paint is resonably fast, so most of the time this test passes (we paint on the screen after the loading)
+  // To fix this, we should either find another test method or, more accurately, keep the loading message until after the second pass
   await expect(page.getByText(/Loading.../)).toBeVisible();
   await expect(page.getByText(/Loading.../)).not.toBeVisible();
   await expect(page.locator("canvas")).toHaveScreenshot({

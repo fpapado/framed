@@ -29,6 +29,8 @@ export default defineConfig({
         // These URLs are already hashed, so no need to cache-bust them
         // NOTE: This is the default; leaving it here for posterity
         // dontCacheBustURLsMatching: /[.-][a-f0-9]{8}\./,
+        // Expand the glob patterns (default js,css,html) to include woff2 font files
+        globPatterns: ["**/*.{js,css,html,woff2}"],
       },
       outDir: "dist",
     }),

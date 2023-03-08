@@ -6,7 +6,7 @@ specifiers:
   '@react-spectrum/color': 3.0.0-beta.20
   '@react-spectrum/provider': ^3.7.0
   '@react-stately/color': ^3.3.0
-  '@react-types/color': 3.0.0-beta.13
+  '@react-types/color': 3.0.0-beta.15
   '@types/image-blob-reduce': ^4.1.1
   '@types/node': ^16.18.14
   '@types/pica': ^9.0.1
@@ -15,11 +15,11 @@ specifiers:
   '@typescript-eslint/eslint-plugin': ^5.54.1
   '@typescript-eslint/parser': ^5.54.1
   '@vitejs/plugin-react': ^3.1.0
-  browser-fs-access: ^0.31.2
+  browser-fs-access: ^0.33.0
   eslint: ^8.35.0
   eslint-plugin-react: ^7.32.2
   eslint-plugin-react-hooks: ^4.6.0
-  framer-motion: ^7.10.3
+  framer-motion: ^10.2.3
   image-blob-reduce: ^4.1.0
   patch-package: ^6.5.1
   pica: ^9.0.1
@@ -32,7 +32,7 @@ specifiers:
   unionize: ^3.1.0
   user-agent-data-types: ^0.3.1
   vite: ^4.1.0
-  web-vitals: ^2.1.4
+  web-vitals: ^3.1.1
   workbox-core: ^6.5.4
   workbox-expiration: ^6.5.4
   workbox-precaching: ^6.5.4
@@ -45,8 +45,8 @@ dependencies:
   '@react-spectrum/color': 3.0.0-beta.20_qvfvd3lnilxm45fyrbavtmgcrq
   '@react-spectrum/provider': 3.7.0_biqbaboplfbrettd7655fr4n2y
   '@react-stately/color': 3.3.0_react@18.2.0
-  browser-fs-access: 0.31.2
-  framer-motion: 7.10.3_biqbaboplfbrettd7655fr4n2y
+  browser-fs-access: 0.33.0
+  framer-motion: 10.2.3_biqbaboplfbrettd7655fr4n2y
   image-blob-reduce: 4.1.0
   pica: 9.0.1
   react: 18.2.0
@@ -56,7 +56,7 @@ dependencies:
   signia-react: 0.0.9_react@18.2.0
   typescript: 4.9.5
   unionize: 3.1.0
-  web-vitals: 2.1.4
+  web-vitals: 3.1.1
   workbox-core: 6.5.4
   workbox-expiration: 6.5.4
   workbox-precaching: 6.5.4
@@ -66,7 +66,7 @@ dependencies:
 
 devDependencies:
   '@playwright/test': 1.31.2
-  '@react-types/color': 3.0.0-beta.13_react@18.2.0
+  '@react-types/color': 3.0.0-beta.15_react@18.2.0
   '@types/image-blob-reduce': 4.1.1
   '@types/node': 16.18.14
   '@types/pica': 9.0.1
@@ -748,53 +748,6 @@ packages:
       '@jridgewell/resolve-uri': 3.1.0
       '@jridgewell/sourcemap-codec': 1.4.14
     dev: true
-
-  /@motionone/animation/10.15.1:
-    resolution: {integrity: sha512-mZcJxLjHor+bhcPuIFErMDNyrdb2vJur8lSfMCsuCB4UyV8ILZLvK+t+pg56erv8ud9xQGK/1OGPt10agPrCyQ==}
-    dependencies:
-      '@motionone/easing': 10.15.1
-      '@motionone/types': 10.15.1
-      '@motionone/utils': 10.15.1
-      tslib: 2.5.0
-    dev: false
-
-  /@motionone/dom/10.15.5:
-    resolution: {integrity: sha512-Xc5avlgyh3xukU9tydh9+8mB8+2zAq+WlLsC3eEIp7Ax7DnXgY7Bj/iv0a4X2R9z9ZFZiaXK3BO0xMYHKbAAdA==}
-    dependencies:
-      '@motionone/animation': 10.15.1
-      '@motionone/generators': 10.15.1
-      '@motionone/types': 10.15.1
-      '@motionone/utils': 10.15.1
-      hey-listen: 1.0.8
-      tslib: 2.5.0
-    dev: false
-
-  /@motionone/easing/10.15.1:
-    resolution: {integrity: sha512-6hIHBSV+ZVehf9dcKZLT7p5PEKHGhDwky2k8RKkmOvUoYP3S+dXsKupyZpqx5apjd9f+php4vXk4LuS+ADsrWw==}
-    dependencies:
-      '@motionone/utils': 10.15.1
-      tslib: 2.5.0
-    dev: false
-
-  /@motionone/generators/10.15.1:
-    resolution: {integrity: sha512-67HLsvHJbw6cIbLA/o+gsm7h+6D4Sn7AUrB/GPxvujse1cGZ38F5H7DzoH7PhX+sjvtDnt2IhFYF2Zp1QTMKWQ==}
-    dependencies:
-      '@motionone/types': 10.15.1
-      '@motionone/utils': 10.15.1
-      tslib: 2.5.0
-    dev: false
-
-  /@motionone/types/10.15.1:
-    resolution: {integrity: sha512-iIUd/EgUsRZGrvW0jqdst8st7zKTzS9EsKkP+6c6n4MPZoQHwiHuVtTQLD6Kp0bsBLhNzKIBlHXponn/SDT4hA==}
-    dev: false
-
-  /@motionone/utils/10.15.1:
-    resolution: {integrity: sha512-p0YncgU+iklvYr/Dq4NobTRdAPv9PveRDUXabPEeOjBLSO/1FNB2phNTZxOxpi1/GZwYpAoECEa0Wam+nsmhSw==}
-    dependencies:
-      '@motionone/types': 10.15.1
-      hey-listen: 1.0.8
-      tslib: 2.5.0
-    dev: false
 
   /@nodelib/fs.scandir/2.1.5:
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2940,16 +2893,6 @@ packages:
       react: 18.2.0
     dev: false
 
-  /@react-types/color/3.0.0-beta.13_react@18.2.0:
-    resolution: {integrity: sha512-TCEXZ41fkJPCjk4yGMcQf1rKEBD5Lp4Lijw8MuPsDBxmuUkDS9yaWg/fFSLOUFxuz/kf55z2khQiHrOM/sth8Q==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-    dependencies:
-      '@react-types/shared': 3.17.0_react@18.2.0
-      '@react-types/slider': 3.4.0_react@18.2.0
-      react: 18.2.0
-    dev: true
-
   /@react-types/color/3.0.0-beta.15_react@18.2.0:
     resolution: {integrity: sha512-pBFHO9vYCEOoEIPNDJg8/3q92B2yD11Z8MKeSQ/FjstsREhZ+ou2ltqQea8o3xIOMyOdwuryK66bk6XwO7ZA2A==}
     peerDependencies:
@@ -2958,7 +2901,6 @@ packages:
       '@react-types/shared': 3.17.0_react@18.2.0
       '@react-types/slider': 3.4.0_react@18.2.0
       react: 18.2.0
-    dev: false
 
   /@react-types/combobox/3.6.0_react@18.2.0:
     resolution: {integrity: sha512-tfZtZ12Kf2bKt3EcFKWcUxrLNc61Y1CGynsOQ/KvHTFwlLTTtKnt/wWuf4kxdqlTK7dDqJzWRGWKlWx6eKlx3w==}
@@ -3609,8 +3551,8 @@ packages:
       fill-range: 7.0.1
     dev: true
 
-  /browser-fs-access/0.31.2:
-    resolution: {integrity: sha512-wZSA7UgKMwR6oxddFQeSIoD7cxiNiaZT+iuVJw4/avr9t2ROwu80gxENT0YJChsLxJ7xBbLZDGHTAXfAg3Pq5Q==}
+  /browser-fs-access/0.33.0:
+    resolution: {integrity: sha512-OIroFiFdNcITJnLCJUoJBRWLf6lu/e7h24Ik0khWg7Ozn+sR+asYiSeiPpXmV32OgogSNiOqCoaI1/7vrl1T+Q==}
     dev: false
 
   /browserslist/4.21.5:
@@ -4113,17 +4055,20 @@ packages:
       is-callable: 1.2.7
     dev: true
 
-  /framer-motion/7.10.3_biqbaboplfbrettd7655fr4n2y:
-    resolution: {integrity: sha512-k2ccYeZNSpPg//HTaqrU+4pRq9f9ZpaaN7rr0+Rx5zA4wZLbk547wtDzge2db1sB+1mnJ6r59P4xb+aEIi/W+w==}
+  /framer-motion/10.2.3_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-+TBxfia8Ym/lYSvTAhome7LYFIR8fKhImuln5zcp9D8nFI2wNSDdBRtK5WoWTyjHXJ7efv5xv376Ma85zHhtUg==}
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
     dependencies:
-      '@motionone/dom': 10.15.5
-      hey-listen: 1.0.8
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0
-      tslib: 2.4.0
+      tslib: 2.5.0
     optionalDependencies:
       '@emotion/is-prop-valid': 0.8.8
     dev: false
@@ -4306,10 +4251,6 @@ packages:
     dependencies:
       function-bind: 1.1.1
     dev: true
-
-  /hey-listen/1.0.8:
-    resolution: {integrity: sha512-COpmrF2NOg4TBWUJ5UVyaCU2A88wEMkUPK4hNqyCkqHbxT92BbvfjoSozkAIIm6XhicGlJHhFdullInrdhwU8Q==}
-    dev: false
 
   /idb/7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
@@ -5182,10 +5123,6 @@ packages:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
     dev: true
 
-  /tslib/2.4.0:
-    resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
-    dev: false
-
   /tslib/2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
     dev: false
@@ -5298,8 +5235,8 @@ packages:
       fsevents: 2.3.2
     dev: true
 
-  /web-vitals/2.1.4:
-    resolution: {integrity: sha512-sVWcwhU5mX6crfI5Vd2dC4qchyTqxV8URinzt25XqVh+bHEPGH4C3NPrNionCP7Obx59wrYEbNlw4Z8sjALzZg==}
+  /web-vitals/3.1.1:
+    resolution: {integrity: sha512-qvllU+ZeQChqzBhZ1oyXmWsjJ8a2jHYpH8AMaVuf29yscOPZfTQTjQFRX6+eADTdsDE8IanOZ0cetweHMs8/2A==}
     dev: false
 
   /webworkify/1.5.0:

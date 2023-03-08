@@ -41,8 +41,6 @@ export function register(config?: Config): Workbox | undefined {
     const swUrl = `${import.meta.env.BASE_URL}service-worker.js`;
     const workbox = new Workbox(swUrl);
 
-    console.info({ workbox });
-
     window.addEventListener("load", () => {
       if (isLocalhost) {
         // This is running on localhost. Let's check if a service worker still exists or not.

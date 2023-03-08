@@ -426,7 +426,7 @@ legend {
   gap: 0.5rem;
 }
 
-.NumberInput {
+.NumberField input {
   display: block;
   padding: 0.5rem;
   font-size: 1rem;
@@ -434,6 +434,37 @@ legend {
   border-radius: 2px;
   min-width: 44px;
   min-height: 44px;
+  max-width: 10ch;
   font-weight: 400;
   transition: background-color 400ms ease-out;
+}
+
+.NumberField .group {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.NumberField .increment,
+.NumberField .decrement {
+  display: block;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-divider);
+  border-radius: 2px;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  min-width: 44px;
+  min-height: 44px;
+  font-weight: 400;
+  transition: background-color 400ms ease-out;
+}
+
+.NumberField button:hover {
+  background-color: var(--color-bg-secondary);
+}
+
+.NumberField button.is-pressed {
+  background-color: var(--color-bg-pressed);
 }

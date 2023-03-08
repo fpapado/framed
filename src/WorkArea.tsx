@@ -5,7 +5,6 @@ import {
   Canvas,
   initialAspectRatio,
   initialBgColor,
-  initialBorder,
   ProcessingState,
   splitTypes,
 } from "./Canvas";
@@ -32,6 +31,7 @@ import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { ArrowDown } from "./icons/ArrowDown";
 import { getSharedImage } from "./serviceWorker/swBridge";
 import { getCanaryEmptyShareFile } from "./utils/canaryShareFile";
+import { NumberField } from "./NumberField";
 
 const LazyCustomColorPicker = lazy(() =>
   import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
@@ -51,7 +51,6 @@ export const WorkArea = track(function WorkArea() {
   // Ids and stuff
   const id = useId();
   const ID = {
-    borderInput: `${id}-border`,
     bgColorInput: `${id}-bgColor`,
     aspectRatioInput: `${id}-aspectRatio`,
     splitTypeInput: `${id}-aspectRatio`,
@@ -138,20 +137,17 @@ export const WorkArea = track(function WorkArea() {
     [canvas]
   );
 
-  const changeBorderFromString = useCallback(
-    (ev: React.ChangeEvent<HTMLInputElement>) => {
-      const newBorder = parseInt(ev.target.value);
-      if (!isNaN(newBorder)) {
-        canvas.setBorder(newBorder);
-      }
-    },
-    [canvas]
-  );
-
   const changeSplitType = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       const newSplitType = ev.target.value as Split;
       canvas.setSplitType(newSplitType);
+    },
+    [canvas]
+  );
+
+  const setBorder = useCallback(
+    (newBorder: number) => {
+      canvas.setBorder(newBorder);
     },
     [canvas]
   );
@@ -283,19 +279,13 @@ export const WorkArea = track(function WorkArea() {
             </div>
           </fieldset>
         </div>
-        <div>
-          <label htmlFor={ID.borderInput}>Border</label>
-          {/* TODO: Consider a slider with dots every 16,32,...1024 */}
-          <input
-            className="NumberInput"
-            // input[type="number"] is not very accessible
-            type="text"
-            name="border"
-            id={ID.borderInput}
-            onChange={changeBorderFromString}
-            defaultValue={initialBorder}
-          />
-        </div>
+        <NumberField
+          label="Border (pixels)"
+          minValue={0}
+          maxValue={500}
+          value={canvas.border}
+          onChange={setBorder}
+        />
         <FilePicker
           onChange={selectFiles}
           multiple

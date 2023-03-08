@@ -29,6 +29,7 @@
   --color-divider: #111;
   --color-accent: #111;
   --color-bg-secondary: #eee;
+  --color-bg-pressed: #ccc;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   --color-darkmode-fg: #111;
   --color-darkmode-bg: #eee;
@@ -44,6 +45,7 @@
   --color-divider: #111;
   --color-accent: #111;
   --color-bg-secondary: #eee;
+  --color-bg-pressed: #ccc;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -53,6 +55,7 @@
   --color-divider: #fffff1;
   --color-accent: #a295f1;
   --color-bg-secondary: #262626;
+  --color-bg-pressed: #4a4a4a;
   -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -63,6 +66,7 @@
     --color-fg: #111;
     --color-divider: #111;
     --color-accent: #111;
+    --color-bg-pressed: #ccc;
     -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
   }
 }
@@ -74,6 +78,7 @@
     --color-divider: #fffff1;
     --color-accent: #a295f1;
     --color-bg-secondary: #262626;
+    --color-bg-pressed: #4a4a4a;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
   }
 }

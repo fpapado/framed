@@ -6,14 +6,20 @@
   "packageManager": "pnpm@7.29.0",
   "dependencies": {
     "@adobe/react-spectrum": "^3.25.1",
+    "@react-aria/button": "^3.7.0",
+    "@react-aria/i18n": "^3.7.0",
+    "@react-aria/numberfield": "^3.4.0",
     "@react-spectrum/color": "3.0.0-beta.20",
+    "@react-spectrum/numberfield": "^3.6.0",
     "@react-spectrum/provider": "^3.7.0",
     "@react-stately/color": "^3.3.0",
+    "@react-stately/numberfield": "^3.4.0",
     "browser-fs-access": "^0.33.0",
     "framer-motion": "^10.2.3",
     "image-blob-reduce": "^4.1.0",
     "pica": "^9.0.1",
     "react": "^18.2.0",
+    "react-aria": "^3.23.1",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^3.1.4",
     "signia": "^0.0.9",
@@ -69,6 +75,7 @@
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "patch-package": "^6.5.1",
+    "rollup-plugin-visualizer": "^5.9.0",
     "user-agent-data-types": "^0.3.1",
     "vite": "^4.1.0"
   }

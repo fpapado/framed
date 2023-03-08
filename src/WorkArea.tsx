@@ -279,13 +279,6 @@ export const WorkArea = track(function WorkArea() {
             </div>
           </fieldset>
         </div>
-        <NumberField
-          label="Border (pixels)"
-          minValue={0}
-          maxValue={500}
-          value={canvas.border}
-          onChange={setBorder}
-        />
         <FilePicker
           onChange={selectFiles}
           multiple
@@ -315,6 +308,13 @@ export const WorkArea = track(function WorkArea() {
         </div>
       </div>
       <div className="Controls BottomControls">
+        <NumberField
+          label="Border (pixels)"
+          minValue={0}
+          maxValue={500}
+          value={canvas.border}
+          onChange={setBorder}
+        />
         <div>
           <label htmlFor={ID.bgColorInput}>Background Color</label>
           <input

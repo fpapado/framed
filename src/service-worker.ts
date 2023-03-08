@@ -98,7 +98,7 @@ self.addEventListener("fetch", (event) => {
 });
 
 // Send the share target image to the page, once it's ready to receive it
-export function serveShareTarget(event: FetchEvent): void {
+function serveShareTarget(event: FetchEvent): void {
   const dataPromise = event.request.formData();
 
   // Redirect so the user can refresh the page without resending data.

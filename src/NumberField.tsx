@@ -9,7 +9,6 @@ import { useNumberFieldState } from "@react-stately/numberfield";
 // FIXME: This is slow / practically inoperable under StrictMode
 export function NumberField(props: AriaNumberFieldProps) {
   const { locale } = useLocale();
-  console.log({ locale });
   const state = useNumberFieldState({ ...props, locale });
   const inputRef = useRef<HTMLInputElement>(null);
   const {

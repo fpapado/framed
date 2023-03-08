@@ -22,11 +22,11 @@ function init() {
   const workbox = serviceWorkerRegistration.register();
 
   root.render(
-    // <React.StrictMode>
-    <ServiceWorkerManager workbox={workbox}>
-      <App initialColorScheme={initialColorScheme} />
-    </ServiceWorkerManager>
-    // </React.StrictMode>
+    <React.StrictMode>
+      <ServiceWorkerManager workbox={workbox}>
+        <App initialColorScheme={initialColorScheme} />
+      </ServiceWorkerManager>
+    </React.StrictMode>
   );
 
   // If you want to start measuring performance in your app, pass a function

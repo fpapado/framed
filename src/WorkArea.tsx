@@ -5,6 +5,7 @@ import {
   Canvas,
   initialAspectRatio,
   initialBgColor,
+  initialBorder,
   ProcessingState,
   splitTypes,
 } from "./Canvas";
@@ -50,6 +51,7 @@ export const WorkArea = track(function WorkArea() {
   // Ids and stuff
   const id = useId();
   const ID = {
+    borderInput: `${id}-border`,
     bgColorInput: `${id}-bgColor`,
     aspectRatioInput: `${id}-aspectRatio`,
     splitTypeInput: `${id}-aspectRatio`,
@@ -131,6 +133,16 @@ export const WorkArea = track(function WorkArea() {
         canvas.setBgColor(newColor);
       } catch (err) {
         // Ignore parse errors, but don't set the colour
+      }
+    },
+    [canvas]
+  );
+
+  const changeBorderFromString = useCallback(
+    (ev: React.ChangeEvent<HTMLInputElement>) => {
+      const newBorder = parseInt(ev.target.value);
+      if (!isNaN(newBorder)) {
+        canvas.setBorder(newBorder);
       }
     },
     [canvas]
@@ -270,6 +282,19 @@ export const WorkArea = track(function WorkArea() {
               })}
             </div>
           </fieldset>
+        </div>
+        <div>
+          <label htmlFor={ID.borderInput}>Border</label>
+          {/* TODO: Consider a slider with dots every 16,32,...1024 */}
+          <input
+            className="NumberInput"
+            // input[type="number"] is not very accessible
+            type="text"
+            name="border"
+            id={ID.borderInput}
+            onChange={changeBorderFromString}
+            defaultValue={initialBorder}
+          />
         </div>
         <FilePicker
           onChange={selectFiles}

@@ -57,6 +57,7 @@ export const splitTypes: { value: Split; label: string }[] = [
   { value: "vertical", label: "Vertical" },
 ];
 
+export const initialBorder = OPTIONS.border;
 export const initialAspectRatio = ASPECT_RATIOS[OPTIONS.aspectRatio];
 export const initialBgColor = parseColor("hsb(0, 0%, 100%)");
 
@@ -64,6 +65,7 @@ export type CanvasState = {
   bgColor: Color;
   aspectRatio: AspectRatio;
   splitType: Split;
+  border: number;
   blob: Blob | null;
   blob2: Blob | null;
 };
@@ -73,6 +75,7 @@ export class Canvas {
     aspectRatio: initialAspectRatio,
     splitType: "horizontal",
     bgColor: initialBgColor,
+    border: initialBorder,
     blob: null,
     blob2: null,
   });
@@ -97,12 +100,23 @@ export class Canvas {
     return this.state.splitType;
   }
 
+  @computed get border() {
+    return this.state.border;
+  }
+
   @computed private get blob() {
     return this.state.blob;
   }
 
   @computed private get blob2() {
     return this.state.blob2;
+  }
+
+  setBorder(border: number) {
+    this._state.update((state) => ({
+      ...state,
+      border,
+    }));
   }
 
   setBgColor(bgColor: Color) {
@@ -167,14 +181,14 @@ export class Canvas {
             resizeToCanvas(blob!, {
               maxWidth: isDiptych
                 ? this.splitType === "horizontal"
-                  ? (this.aspectRatio.width - OPTIONS.border) / 2
-                  : this.aspectRatio.width - OPTIONS.border
-                : this.aspectRatio.width - OPTIONS.border * 2,
+                  ? (this.aspectRatio.width - this.border) / 2
+                  : this.aspectRatio.width - this.border
+                : this.aspectRatio.width - this.border * 2,
               maxHeight: isDiptych
                 ? this.splitType === "horizontal"
-                  ? this.aspectRatio.height - OPTIONS.border
-                  : (this.aspectRatio.height - OPTIONS.border) / 2
-                : this.aspectRatio.height - OPTIONS.border / 2,
+                  ? this.aspectRatio.height - this.border
+                  : (this.aspectRatio.height - this.border) / 2
+                : this.aspectRatio.height - this.border / 2,
               allowUpscale: true,
             })
           )
@@ -199,6 +213,7 @@ export class Canvas {
       async () => {
         // NOTE: We must destructure these before the await point, to ensure that the dependency is tracked correctly
         const colorHex = this.colorHex;
+        const border = this.border;
         const aspectRatio = this.aspectRatio;
         const splitType = this.splitType;
         const canvases = await this.resizedCanvases;
@@ -225,7 +240,7 @@ export class Canvas {
             canvasSrc1: resizedCanvas1,
             canvasSrc2: resizedCanvas2,
             canvasDest: canvasDest,
-            gap: OPTIONS.border,
+            gap: border,
             aspectRatio: aspectRatio,
             bgColor: colorHex,
             split: splitType,

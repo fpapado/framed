@@ -67,6 +67,7 @@ h1 {
 .ShareButton,
 .DownloadButton {
   display: block;
+  padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid var(--color-divider);
   border-radius: 2px;
@@ -423,4 +424,16 @@ legend {
   margin-top: 0.5rem;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.NumberInput {
+  display: block;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid var(--color-divider);
+  border-radius: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  font-weight: 400;
+  transition: background-color 400ms ease-out;
 }

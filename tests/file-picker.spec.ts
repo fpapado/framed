@@ -16,8 +16,10 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
   // If the native fs access API is supported, then we must mock it;
   // this seems counter-intuitive, but Playwright does not provide helpers for the native API, since it is not widely supported.
   // Meanwhile, the code has a fallback to using input[type=file] when the native fs API is not supported, which means we can use Playwright's FileChooser API in that case.
+  // eslint-disable-next-line playwright/no-conditional-in-test -- Needed to set up the mocking
   if (await supportsFsAccessAPI(page)) {
-    testInfo.slow(); // The buffer serialisation takes a while on CI
+    testInfo.slow(); // The buffer serialisation can take a while on CI
+    // TODO: Do this as initScript, and provide a global handle instead
     await mockFileAccessApi(page, respondWith);
   } else {
     page.on("filechooser", async (fileChooser) => {

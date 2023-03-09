@@ -9,7 +9,12 @@ module.exports = {
     "plugin:react-hooks/recommended",
     "plugin:@typescript-eslint/recommended",
   ],
-  overrides: [],
+  overrides: [
+    {
+      files: ["**/*.spec.{js,ts}"],
+      extends: ["plugin:playwright/playwright-test"],
+    },
+  ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: "latest",

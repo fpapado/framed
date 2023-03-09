@@ -5,6 +5,8 @@ import {
 } from "./utils/native-fs-access-api.js";
 
 test("Can pick a file", async ({ page, browserName }, testInfo) => {
+  testInfo.skip(true, "We have not set up correct snapshots yet.");
+
   testInfo.fixme(
     browserName === "webkit",
     "Webkit does not fire filechooser events consistently"

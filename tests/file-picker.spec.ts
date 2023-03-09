@@ -5,7 +5,10 @@ import {
 } from "./utils/native-fs-access-api.js";
 
 test("Can pick a file", async ({ page, browserName }, testInfo) => {
-  testInfo.skip(true, "We have not set up correct snapshots yet.");
+  testInfo.skip(
+    !!process.env.CI,
+    "We have not set up correct snapshots on CI yet."
+  );
 
   testInfo.fixme(
     browserName === "webkit",

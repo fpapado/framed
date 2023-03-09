@@ -11,7 +11,7 @@ import {
  * @see https://jeffy.info/2022/08/25/testing-a-service-worker.html
  */
 test.describe("@prodOnly service worker tests", () => {
-  test("post-install state", async ({ baseURL, page }) => {
+  test("precaching", async ({ baseURL, page }) => {
     // Navigate to a page which registers a service worker.
     await page.goto("/");
 
@@ -89,5 +89,76 @@ test.describe("@prodOnly service worker tests", () => {
     };
 
     expect(cacheContents).toEqual(expected);
+  });
+
+  test("update notification", async ({ baseURL, page }) => {
+    // Navigate to a page which registers a service worker.
+    await page.goto("/");
+
+    // wait for the service worker to be installed
+    const swURL = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      return registration.active?.scriptURL;
+    });
+
+    // Confirm that the expected service worker script installed.
+    const expectedSwUrl = new URL("/service-worker.js", baseURL);
+    expect(swURL).toBe(expectedSwUrl.href);
+
+    // Now the caches can be inspected
+    // (but not fetch events; those need more setup, see https://jeffy.info/2022/08/25/testing-a-service-worker.html)
+    // Ensure you include clients.claim() in your activate handler!
+    await page.evaluate(async () => {
+      // Wait until the initial /service-worker.js controls the page.
+      await new Promise<void>((resolve) => {
+        if (navigator.serviceWorker.controller) {
+          resolve();
+        } else {
+          navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => resolve(),
+            { once: true }
+          );
+        }
+      });
+
+      // At this point, you can set up listeners for whatever events/state
+      // changes you care about waiting for, potentially creating new promises
+      // (as with the above example) to confirm that they take place.
+      // Register a new service worker, to trigger an update prompt. The different url triggers the update in current browsers.
+      // (normally you shouldn't update the URL)
+      navigator.serviceWorker.register("/service-worker.js?_cacheBust=1");
+    });
+
+    // The status should be visible and the heading should show up
+    await expect(
+      page.getByRole("status").filter({
+        has: page.getByRole("heading", { name: /Update Available!/ }),
+      })
+    ).toBeVisible();
+
+    const confirmButton = page.getByRole("button", { name: /Refresh/ });
+
+    // Click, which waits for service worker to install, and causes a navigation
+    // The navigation happens indirectly, inside an event listener, so we must await it explicitly
+    // NOTE: The Playwright docs mark page.waitForNavigation as deprecated,
+    // but the alternative (page.waitForURL) does not seem to work for reloads.
+    // @see https://github.com/microsoft/playwright/issues/20853
+    const reloaded = page.waitForNavigation({ url: "/" });
+    await confirmButton.click();
+    await reloaded;
+
+    // wait for the (new) service worker to be installed
+    const swUrlAfterRefresh = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready;
+      return registration.active?.scriptURL;
+    });
+
+    // Confirm that the updated service worker script installed.
+    const expectedUpdatedSwUrl = new URL(
+      "/service-worker.js?_cacheBust=1",
+      baseURL
+    );
+    expect(swUrlAfterRefresh).toBe(expectedUpdatedSwUrl.href);
   });
 });

@@ -37,9 +37,11 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "echo \"TODO: Move tsc out of build command and into a linting step\" && tsc && vite build",
     "preview": "vite preview",
-    "test": "pnpm run build && playwright test",
+    "test": "playwright test",
+    "test:prod": "playwright test --config=playwright.config.prod.ts",
+    "test:ci": "echo \"TODO: Implement ci tests using the previe link\" && playwright test --config=playwright.config.ci.ts",
     "lint": "eslint src/ --fix",
     "postinstall": "patch-package"
   },

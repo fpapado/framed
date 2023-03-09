@@ -6,10 +6,14 @@ import { defineConfig, devices } from "@playwright/test";
  */
 // require('dotenv').config();
 
+const DEV_SERVER_PORT = 5173;
+
 /**
+ * Playwright configuration for local tests, using the development build
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
+  grepInvert: /@prodOnly/,
   testDir: "./tests",
   /* Maximum time one test can run for. */
   timeout: 30 * 1000,
@@ -33,8 +37,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "pnpm run preview",
-    port: 4173,
+    command: "pnpm run start",
+    port: DEV_SERVER_PORT,
     reuseExistingServer: !process.env.CI,
   },
 
@@ -42,14 +46,12 @@ export default defineConfig({
   use: {
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
+
+    /** baseUrl used for all tests, so that page.goto('/') gets prefixed correctly */
+    baseURL: `http://localhost:${DEV_SERVER_PORT}`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
-
-    /** baseUrl used for all tests, so that page.goto('/') gets prefixed correctly */
-    baseURL: "http://localhost:4173",
   },
 
   /* Configure projects for major browsers */

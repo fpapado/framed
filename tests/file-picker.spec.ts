@@ -4,9 +4,6 @@ import {
   supportsFsAccessAPI,
 } from "./utils/native-fs-access-api.js";
 
-// TODO: Use an environment variable to fetch a preview branch
-const DEPLOY_URL = "http://localhost:5173";
-
 test("Can pick a file", async ({ page, browserName }, testInfo) => {
   testInfo.fixme(
     browserName === "webkit",
@@ -14,7 +11,7 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
   );
 
   const respondWith = "tests/fixtures/picked-1.jpg";
-  await page.goto(DEPLOY_URL);
+  await page.goto("/");
 
   // If the native fs access API is supported, then we must mock it;
   // this seems counter-intuitive, but Playwright does not provide helpers for the native API, since it is not widely supported.

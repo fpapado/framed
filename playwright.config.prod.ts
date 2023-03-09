@@ -18,7 +18,10 @@ export default defineConfig({
   ...devConfig,
   grepInvert: undefined,
   // The config is the same, except we run `preview` and serve it under port 5173
-  use: { ...devConfig.use, baseURL: `http://localhost:${PREVIEW_SERVER_PORT}` },
+  use: {
+    ...devConfig.use,
+    baseURL: `http://localhost:${PREVIEW_SERVER_PORT}/`,
+  },
   webServer: {
     ...devConfig.webServer,
     command: "pnpm run preview",

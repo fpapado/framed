@@ -48,7 +48,7 @@ export default defineConfig({
     actionTimeout: 0,
 
     /** baseUrl used for all tests, so that page.goto('/') gets prefixed correctly */
-    baseURL: `http://localhost:${DEV_SERVER_PORT}`,
+    baseURL: `http://localhost:${DEV_SERVER_PORT}/`,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",

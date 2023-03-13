@@ -2,8 +2,11 @@ import { useRef } from "react";
 
 import { useLocale } from "@react-aria/i18n";
 
-import { useButton, AriaButtonProps } from "@react-aria/button";
-import { useNumberField, AriaNumberFieldProps } from "@react-aria/numberfield";
+import { useButton, type AriaButtonProps } from "@react-aria/button";
+import {
+  useNumberField,
+  type AriaNumberFieldProps,
+} from "@react-aria/numberfield";
 import { useNumberFieldState } from "@react-stately/numberfield";
 
 // FIXME: This is slow / practically inoperable under StrictMode

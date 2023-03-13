@@ -1,16 +1,16 @@
 import {
   createContext,
-  PropsWithChildren,
   useCallback,
   useContext,
   useMemo,
   useState,
+  type PropsWithChildren,
 } from "react";
 import {
-  changeHtmlPreference,
-  Preference,
   Preferences,
+  changeHtmlPreference,
   storePreference,
+  type Preference,
 } from "./colorScheme";
 
 const ColorSchemeContext = createContext<

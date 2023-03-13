@@ -1,12 +1,12 @@
-import { m, AnimatePresence } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import {
   createContext,
-  PropsWithChildren,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
+  type PropsWithChildren,
 } from "react";
 import { Workbox } from "workbox-window";
 import { skipWaitingAndReloadWhenControlling } from "./swBridge";

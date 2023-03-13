@@ -1,4 +1,4 @@
-import { unionize, UnionOf } from "unionize";
+import { unionize, type UnionOf } from "unionize";
 
 export const Preferences = unionize({
   System: {},

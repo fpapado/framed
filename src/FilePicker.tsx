@@ -1,5 +1,9 @@
-import { fileOpen, FileWithHandle } from "browser-fs-access";
-import { AriaAttributes, PropsWithChildren, useCallback } from "react";
+import { fileOpen, type FileWithHandle } from "browser-fs-access";
+import {
+  useCallback,
+  type AriaAttributes,
+  type PropsWithChildren,
+} from "react";
 
 type FilePickerProps<M extends boolean | undefined = false> = M extends
   | false

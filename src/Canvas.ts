@@ -1,11 +1,11 @@
-import { Color, parseColor } from "@react-stately/color";
+import { type Color, parseColor } from "@react-stately/color";
 import { atom, computed, react } from "signia";
 import {
-  AspectRatio,
-  AspectRatioId,
+  type AspectRatio,
+  type AspectRatioId,
   drawDiptychWithBackground,
   drawImageWithBackground,
-  Split,
+  type Split,
 } from "./drawing";
 import { resizeToBlob, resizeToCanvas } from "./imageResize";
 

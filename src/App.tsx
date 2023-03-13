@@ -2,8 +2,8 @@
 // TODO: Custom size
 // TODO: Custom jpeg compression ratio
 // Libraries
-import React, { useEffect } from "react";
 import { LazyMotion, MotionConfig } from "framer-motion";
+import React, { useEffect } from "react";
 
 // Own app
 import { usePrefersReducedMotion } from "./animation/usePrefersReducedMotion";
@@ -12,9 +12,9 @@ import { WorkArea } from "./WorkArea";
 
 // Styles
 import "./App.css";
-import { ColorSchemeProvider } from "./colorScheme/ColorSchemeProvider";
-import { Preference, Preferences } from "./colorScheme/colorScheme";
+import { Preferences, type Preference } from "./colorScheme/colorScheme";
 import { ColorSchemePicker } from "./colorScheme/ColorSchemePicker";
+import { ColorSchemeProvider } from "./colorScheme/ColorSchemeProvider";
 
 const loadFramerMotionFeatures = () =>
   import("./animation/framerFeatures").then((res) => res.default);

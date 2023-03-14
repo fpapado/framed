@@ -44,7 +44,7 @@
     "test": "playwright test",
     "test:prod": "playwright test --config=playwright.config.prod.ts",
     "test:ci": "echo \"TODO: Implement ci tests using the preview link\" && playwright test --config=playwright.config.ci.ts",
-    "lint": "eslint src/",
+    "lint": "eslint src/ --fix",
     "postinstall": "patch-package"
   },
   "eslintConfig": {

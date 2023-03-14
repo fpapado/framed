@@ -3,7 +3,7 @@ import { track, useAtom } from "signia-react";
 import { parseColor } from "@react-stately/color";
 import { fileSave, type FileWithHandle } from "browser-fs-access";
 import { m } from "framer-motion";
-import React, {
+import {
   Suspense,
   lazy,
   useCallback,
@@ -12,6 +12,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type PropsWithChildren,
 } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -26,7 +27,7 @@ import {
 
 import { FilePicker } from "./FilePicker";
 import { NumberField } from "./NumberField";
-import { type AspectRatio, type AspectRatioId, type Split } from "./drawing";
+import type { AspectRatio, AspectRatioId, Split } from "./drawing";
 import { AndroidStyleShareIcon } from "./icons/AndroidStyleShareIcon";
 import { AppleStyleShareIcon } from "./icons/AppleStyleShareIcon";
 import { ArrowDown } from "./icons/ArrowDown";
@@ -128,7 +129,7 @@ export const WorkArea = track(function WorkArea() {
   }, [canvas, processingState]);
 
   const changeBgColorFromString = useCallback(
-    (ev: React.ChangeEvent<HTMLInputElement>) => {
+    (ev: ChangeEvent<HTMLInputElement>) => {
       try {
         const newColor = parseColor(ev.target.value).toFormat("hsb");
         canvas.setBgColor(newColor);
@@ -140,7 +141,7 @@ export const WorkArea = track(function WorkArea() {
   );
 
   const changeSplitType = useCallback(
-    (ev: React.ChangeEvent<HTMLInputElement>) => {
+    (ev: ChangeEvent<HTMLInputElement>) => {
       const newSplitType = ev.target.value as Split;
       canvas.setSplitType(newSplitType);
     },
@@ -155,7 +156,7 @@ export const WorkArea = track(function WorkArea() {
   );
 
   const changeAspectRatio = useCallback(
-    (ev: React.ChangeEvent<HTMLInputElement>) => {
+    (ev: ChangeEvent<HTMLInputElement>) => {
       const newAspectRatio = ASPECT_RATIOS[ev.target.value as AspectRatioId];
       canvas.setAspectRatio(newAspectRatio);
     },

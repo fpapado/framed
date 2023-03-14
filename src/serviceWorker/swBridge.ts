@@ -2,7 +2,7 @@
  * Utilities for communicating with the service worker
  */
 
-import { Workbox } from "workbox-window";
+import type { Workbox } from "workbox-window";
 import { object, literal, custom } from "zod";
 
 /**

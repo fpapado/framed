@@ -8,7 +8,7 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
-import { Workbox } from "workbox-window";
+import type { Workbox } from "workbox-window";
 import { skipWaitingAndReloadWhenControlling } from "./swBridge";
 
 const ServiceWorkerContext = createContext<Workbox | undefined>(undefined);

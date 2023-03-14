@@ -150,9 +150,11 @@ type DataWithType = {
   type: string;
 };
 
-function isDataWithType(data: any): data is DataWithType {
+function isDataWithType(data: unknown): data is DataWithType {
   return (
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- validated in the previous arm
-    typeof data === "object" && "type" in data && typeof data.type === "string"
+    !!data &&
+    typeof data === "object" &&
+    "type" in data &&
+    typeof data.type === "string"
   );
 }

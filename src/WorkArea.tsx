@@ -157,12 +157,6 @@ export const WorkArea = track(function WorkArea() {
   const changeAspectRatio = useCallback(
     (ev: React.ChangeEvent<HTMLInputElement>) => {
       const newAspectRatio = ASPECT_RATIOS[ev.target.value as AspectRatioId];
-
-      if (!newAspectRatio) {
-        console.error("Unrecognised aspect ratio:", newAspectRatio);
-        return;
-      }
-
       canvas.setAspectRatio(newAspectRatio);
     },
     [canvas]

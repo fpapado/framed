@@ -3,7 +3,7 @@
  */
 
 import { Workbox } from "workbox-window";
-import { z } from "zod";
+import { object, literal, custom } from "zod";
 
 /**
  * Reload when the specified Service Worker takes over the page
@@ -19,9 +19,9 @@ export function skipWaitingAndReloadWhenControlling(wb: Workbox) {
   wb.messageSkipWaiting();
 }
 
-const LoadImageAction = z.object({
-  action: z.literal("load-image"),
-  file: z.custom<File>((data) => data instanceof File),
+const LoadImageAction = object({
+  action: literal("load-image"),
+  file: custom<File>((data) => data instanceof File),
 });
 
 /** Wait for a shared image */

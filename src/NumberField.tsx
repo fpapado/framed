@@ -41,7 +41,7 @@ export function NumberField(props: AriaNumberFieldProps) {
 function Button({
   className,
   ...props
-}: AriaButtonProps<"button"> & { className?: string }) {
+}: AriaButtonProps & { className?: string }) {
   const ref = useRef<HTMLButtonElement>(null);
   const { buttonProps, isPressed } = useButton(props, ref);
   const { children } = props;

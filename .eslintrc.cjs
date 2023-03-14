@@ -7,7 +7,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
-    "plugin:@typescript-eslint/strict",
+    "plugin:@typescript-eslint/strict-type-checked",
     // "plugin:@typescript-eslint/stylistic-type-checked",
   ],
   overrides: [

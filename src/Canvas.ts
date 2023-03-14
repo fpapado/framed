@@ -145,10 +145,10 @@ export class Canvas {
   //      This is more than adequate for our aspect ratios, and ensures faster switching betwen aspect ratios (which resize to fit the box)
   //   2) Store those first-pass results to to the Canvas state, for future resizing (e.g. changing aspect ratio)
   async setBlobs(blob1: Blob, blob2?: Blob) {
-    const [resized1, resized2] = await Promise.all(
+    const [resized1, resized2] = (await Promise.all(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- filter(Boolean) handles filtering
-      [blob1, blob2].filter(Boolean).map((blob) => firstPassResize(blob))
-    );
+      [blob1, blob2].filter(Boolean).map((blob) => firstPassResize(blob!))
+    )) as [Blob, Blob?];
 
     this._state.update((state) => ({
       ...state,
@@ -161,7 +161,9 @@ export class Canvas {
 
   // TODO: This async computed feels a bit gross, but it seems to work ok? The only thing missing is tracking of the processing state
   @computed
-  private get resizedCanvases() {
+  private get resizedCanvases(): Promise<
+    [HTMLCanvasElement, HTMLCanvasElement?] | undefined
+  > {
     return (async () => {
       try {
         // NOTE: We use these directly instead of destructuring from state, to ensure we do not re-compute on unrelated changes
@@ -194,15 +196,12 @@ export class Canvas {
           )
         );
 
-        return [resizedCanvas1, resizedCanvas2] as const;
+        return [resizedCanvas1, resizedCanvas2];
       } catch (err) {
-        // Ignore error if it is a cancelation error; this is expected
-        if (err instanceof DOMException && err.name === "AbortError") {
-          return;
-        }
         console.error(
           new Error("Unaccounted error when resizing", { cause: err })
         );
+        return;
       }
     })();
   }
@@ -230,7 +229,7 @@ export class Canvas {
         }
 
         const [resizedCanvas1, resizedCanvas2] = canvases;
-        const isDiptych = resizedCanvas1 && resizedCanvas2;
+        const isDiptych = !!resizedCanvas2;
 
         // Re-draw the image(s)
         // TODO: We could change drawDiptych to a singular drawImages, which would make the choice based on how many images are provided
@@ -248,7 +247,7 @@ export class Canvas {
         } else {
           // Not a diptych; draw whichever blob is defined, or just the background
           drawImageWithBackground({
-            canvasSrc: resizedCanvas1 ?? resizedCanvas2,
+            canvasSrc: resizedCanvas1,
             canvasDest: canvasDest,
             aspectRatio: aspectRatio,
             bgColor: colorHex,

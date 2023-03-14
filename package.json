@@ -38,12 +38,12 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "build": "echo \"TODO: Move tsc out of build command and into a linting step\" && tsc && vite build",
+    "build": "tsc && vite build",
     "typecheck": "tsc",
     "preview": "vite preview",
     "test": "playwright test",
     "test:prod": "playwright test --config=playwright.config.prod.ts",
-    "test:ci": "echo \"TODO: Implement ci tests using the previe link\" && playwright test --config=playwright.config.ci.ts",
+    "test:ci": "echo \"TODO: Implement ci tests using the preview link\" && playwright test --config=playwright.config.ci.ts",
     "lint": "eslint src/",
     "postinstall": "patch-package"
   },

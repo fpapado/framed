@@ -38,7 +38,7 @@ const LazyCustomColorPicker = lazy(() =>
 );
 
 const SUPPORTS_SHARE = Boolean("share" in navigator);
-type SharingState = "inert" | "sharing" | "error" | "success";
+type SharingState = "error" | "inert" | "sharing" | "success";
 
 export const WorkArea = track(function WorkArea() {
   const canvas = useMemo(() => new Canvas(), []);
@@ -467,10 +467,7 @@ function PlatformShareIcon() {
   }
 
   // If that didn't work, sniff navigator.platform
-  if (
-    navigator.platform.indexOf("Mac") === 0 ||
-    navigator.platform === "iPhone"
-  ) {
+  if (navigator.platform.startsWith("Mac") || navigator.platform === "iPhone") {
     return <AppleStyleShareIcon aria-hidden="true" />;
   }
 

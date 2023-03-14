@@ -147,7 +147,7 @@ export class Canvas {
   async setBlobs(blob1: Blob, blob2?: Blob) {
     const [resized1, resized2] = await Promise.all(
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- filter(Boolean) handles filtering
-      [blob1, blob2].filter(Boolean).map((blob) => firstPassResize(blob!))
+      [blob1, blob2].filter(Boolean).map((blob) => firstPassResize(blob))
     );
 
     this._state.update((state) => ({

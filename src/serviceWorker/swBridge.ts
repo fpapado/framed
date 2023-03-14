@@ -3,6 +3,7 @@
  */
 
 import { Workbox } from "workbox-window";
+import { z } from "zod";
 
 /**
  * Reload when the specified Service Worker takes over the page
@@ -18,12 +19,20 @@ export function skipWaitingAndReloadWhenControlling(wb: Workbox) {
   wb.messageSkipWaiting();
 }
 
+const LoadImageAction = z.object({
+  action: z.literal("load-image"),
+  file: z.custom<File>((data) => data instanceof File),
+});
+
 /** Wait for a shared image */
 export function getSharedImage(): Promise<File> {
   return new Promise((resolve) => {
     const onmessage = (event: MessageEvent) => {
-      if (event.data.action !== "load-image") return;
-      resolve(event.data.file);
+      const action = LoadImageAction.safeParse(event.data);
+      if (!action.success) {
+        return;
+      }
+      resolve(action.data.file);
       navigator.serviceWorker.removeEventListener("message", onmessage);
     };
 

@@ -37,7 +37,7 @@ const LazyCustomColorPicker = lazy(() =>
   import("./CustomColorPicker").then((m) => ({ default: m.CustomColorPicker }))
 );
 
-const SUPPORTS_SHARE = Boolean(navigator.share);
+const SUPPORTS_SHARE = Boolean("share" in navigator);
 type SharingState = "inert" | "sharing" | "error" | "success";
 
 export const WorkArea = track(function WorkArea() {
@@ -114,10 +114,12 @@ export const WorkArea = track(function WorkArea() {
 
       // Remove the ?share-target from the URL
       window.history.replaceState("", "", "/");
-      canvas.setBlobs(file);
+      await canvas.setBlobs(file);
     }
 
-    effectInner();
+    effectInner().catch(() => {
+      processingState.set("error");
+    });
 
     return () => {
       hasCleanedUp = true;
@@ -153,7 +155,7 @@ export const WorkArea = track(function WorkArea() {
   );
 
   const changeAspectRatio = useCallback(
-    async (ev: React.ChangeEvent<HTMLInputElement>) => {
+    (ev: React.ChangeEvent<HTMLInputElement>) => {
       const newAspectRatio = ASPECT_RATIOS[ev.target.value as AspectRatioId];
 
       if (!newAspectRatio) {
@@ -194,6 +196,8 @@ export const WorkArea = track(function WorkArea() {
               aspectRatio: canvas.aspectRatio,
               originalNames: filenames.current,
             }),
+          }).catch((err) => {
+            console.error(err);
           });
         }
       },

@@ -7,7 +7,8 @@ module.exports = {
     "eslint:recommended",
     "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
-    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-type-checked",
+    // "plugin:@typescript-eslint/stylistic-type-checked",
   ],
   overrides: [
     {
@@ -17,11 +18,21 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
+    project: true,
     ecmaVersion: "latest",
     sourceType: "module",
   },
   plugins: ["react", "@typescript-eslint"],
   rules: {
     "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      {
+        checksVoidReturn: {
+          arguments: false,
+          attributes: false,
+        },
+      },
+    ],
   },
 };

@@ -32,7 +32,8 @@
     "workbox-precaching": "^6.5.4",
     "workbox-routing": "^6.5.4",
     "workbox-strategies": "^6.5.4",
-    "workbox-window": "^6.5.4"
+    "workbox-window": "^6.5.4",
+    "zod": "^3.21.4"
   },
   "scripts": {
     "start": "vite",
@@ -43,7 +44,7 @@
     "test": "playwright test",
     "test:prod": "playwright test --config=playwright.config.prod.ts",
     "test:ci": "echo \"TODO: Implement ci tests using the previe link\" && playwright test --config=playwright.config.ci.ts",
-    "lint": "eslint src/ --fix",
+    "lint": "eslint src/",
     "postinstall": "patch-package"
   },
   "eslintConfig": {
@@ -71,8 +72,8 @@
     "@types/pica": "^9.0.1",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
-    "@typescript-eslint/eslint-plugin": "^5.54.1",
-    "@typescript-eslint/parser": "^5.54.1",
+    "@typescript-eslint/eslint-plugin": "6.0.0-alpha.81",
+    "@typescript-eslint/parser": "6.0.0-alpha.81",
     "@vitejs/plugin-react": "^3.1.0",
     "eslint": "^8.35.0",
     "eslint-plugin-playwright": "^0.12.0",

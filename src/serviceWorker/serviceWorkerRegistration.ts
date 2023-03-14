@@ -101,11 +101,14 @@ function checkValidServiceWorker(
         (contentType != null && contentType.indexOf("javascript") === -1)
       ) {
         // No service worker found. Probably a different app. Reload the page.
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.unregister().then(() => {
+        navigator.serviceWorker.ready
+          .then(async (registration) => {
+            await registration.unregister();
             window.location.reload();
+          })
+          .catch(() => {
+            console.error("Could not unregister service worker");
           });
-        });
       } else {
         // Service worker found. Proceed as normal.
         registerValidSW(workbox, config);
@@ -122,10 +125,10 @@ export function unregister() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.ready
       .then((registration) => {
-        registration.unregister();
+        return registration.unregister();
       })
       .catch((error) => {
-        console.error(error.message);
+        console.error(error);
       });
   }
 }

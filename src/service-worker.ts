@@ -73,8 +73,10 @@ registerRoute(
 // This allows the web app to trigger skipWaiting via
 // registration.waiting.postMessage({type: 'SKIP_WAITING'})
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
+  if (isDataWithType(event.data) && event.data.type === "SKIP_WAITING") {
+    self
+      .skipWaiting()
+      .catch((err) => console.error("Could not skip waiting", err));
   }
 });
 
@@ -132,9 +134,25 @@ function nextMessage(dataVal: string): Promise<void> {
   });
 }
 
+// Run any resolvers that are waiting for a particular message, when it arrives
 self.addEventListener("message", (event) => {
+  // Nothing to do if the event data is not a string
+  if (!(typeof event.data === "string")) {
+    return;
+  }
   const resolvers = nextMessageResolveMap.get(event.data);
   if (!resolvers) return;
   nextMessageResolveMap.delete(event.data);
   for (const resolve of resolvers) resolve();
 });
+
+type DataWithType = {
+  type: string;
+};
+
+function isDataWithType(data: any): data is DataWithType {
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- validated in the previous arm
+    typeof data === "object" && "type" in data && typeof data.type === "string"
+  );
+}

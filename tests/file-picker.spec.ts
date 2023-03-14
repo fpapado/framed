@@ -26,21 +26,52 @@ test("Can pick a file", async ({ page, browserName }, testInfo) => {
     testInfo.slow(); // The buffer serialisation can take a while on CI
     // TODO: Do this as initScript, and provide a global handle instead
     await mockFileAccessApi(page, respondWith);
+    await page.getByRole("button", { name: "Pick image(s)" }).click();
   } else {
-    page.on("filechooser", async (fileChooser) => {
-      await fileChooser.setFiles(respondWith);
-    });
+    // This method of setting up filechooser is slightly nicer than page.on('filechooser),
+    // because it works better with step-debugging. The page.on version times out in the poll.
+    const fileChooserPromise = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: "Pick image(s)" }).click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(respondWith);
   }
 
-  await page.getByRole("button", { name: "Pick image(s)" }).click();
+  await expect
+    .poll(
+      async () => {
+        // Pick a rectangle in the middle of the canvas; it should not be white (the default)
+        // We don't have a UI-first way of testing when the canvas has painted, and retrying the screenshot (.toPass) kept creating new snapshots for some reason
+        return await page.locator("canvas").evaluate((canvas, canary) => {
+          if (!(canvas instanceof HTMLCanvasElement)) {
+            return false;
+          }
 
-  // Wait for the processing message to appear and disappear; this signals that the image has settled
-  // FIXME: This test can be flaky.
-  // The loading message appears for the first-pass resize, which is typically the most time-consuming.
-  // The second resize/paint is resonably fast, so most of the time this test passes (we paint on the screen after the loading)
-  // To fix this, we should either find another test method or, more accurately, keep the loading message until after the second pass
-  await expect(page.getByText(/Loading.../)).toBeVisible();
-  await expect(page.getByText(/Loading.../)).not.toBeVisible();
+          const ctx = canvas.getContext("2d");
+
+          const testRectangle = ctx?.getImageData(
+            1000 - 10,
+            1000 - 10,
+            10,
+            10
+          ).data;
+
+          if (!testRectangle) {
+            return false;
+          }
+
+          let pixels: number[][] = [];
+          for (let i = 0; i < testRectangle.length; i += 4) {
+            const chunk = [...testRectangle.slice(i, i + 4)];
+            pixels.push(chunk);
+          }
+          return pixels;
+        });
+      },
+      { message: "Ensure pixels are painted on the canvas" }
+    )
+    // If any pixel is not the canary, then we have painted
+    .not.toContainEqual([255, 255, 255, 255]);
+
   await expect(page.locator("canvas")).toHaveScreenshot({
     maxDiffPixelRatio: 0.01,
   });

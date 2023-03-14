@@ -61,10 +61,6 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
     {
-      name: "edge",
-      use: { ...devices["Desktop Edge"], channel: "msedge" },
-    },
-    {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
     },
@@ -72,14 +68,24 @@ export default defineConfig({
       name: "webkit",
       use: { ...devices["Desktop Safari"] },
     },
-    {
-      name: "mobile-chrome",
-      use: { ...devices["Pixel 5"] },
-    },
-    {
-      name: "mobile-safari",
-      use: { ...devices["iPhone 13"] },
-    },
+    // To consider later:
+    // {
+    // edge supports sharing on macOS
+    //   name: "edge",
+    //   use: { ...devices["Desktop Edge"], channel: "msedge" },
+    // },
+    // {
+    // mobile chrome is good to include both for sharing and file picking
+    // also, the app is largely used on mobile
+    //   name: "mobile-chrome",
+    //   use: { ...devices["Pixel 5"] },
+    // },
+    // {
+    // mobile safari is good to include both for sharing and file picking
+    // also, the app is largely used on mobile
+    //   name: "mobile-safari",
+    //   use: { ...devices["iPhone 13"] },
+    // },
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */

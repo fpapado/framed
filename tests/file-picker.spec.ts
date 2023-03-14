@@ -6,8 +6,8 @@ import {
 
 test("Can pick a file", async ({ page, browserName }, testInfo) => {
   testInfo.skip(
-    !!process.env.CI,
-    "We have not set up correct snapshots on CI yet."
+    !!process.env.CI && process.platform === "darwin",
+    "We have not set up snapshots for platforms other than macOS on CI (yet)."
   );
 
   testInfo.fixme(

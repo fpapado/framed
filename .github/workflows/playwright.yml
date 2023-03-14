@@ -5,9 +5,9 @@ on:
   pull_request:
     branches: [ main, master ]
 jobs:
-  test:
+  test_mac:
     timeout-minutes: 60
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v3
